@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XPS IRF シミュレータ - ユーザーマニュアル</title>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --border-color: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
+      line-height: 1.8;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      color: var(--accent-blue);
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      color: var(--accent-blue);
+      margin-top: 2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h3 {
+      color: var(--accent-green);
+    }
+
+    p, li {
+      color: var(--text-secondary);
+    }
+
+    code {
+      background-color: var(--bg-secondary);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 0.9em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: var(--bg-secondary);
+      color: var(--accent-blue);
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .tip {
+      background-color: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent-green);
+      margin: 1rem 0;
+    }
+
+    .warning {
+      background-color: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent-red);
+      margin: 1rem 0;
+    }
+
+    .feature-box {
+      background-color: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 0.5rem 0;
+    }
+
+    .feature-box h4 {
+      color: var(--accent-blue);
+      margin: 0 0 0.5rem 0;
+    }
+
+    .lang-switch {
+      position: absolute;
+      top: 1rem;
+      right: 2rem;
+    }
+
+    .lang-switch a {
+      color: var(--accent-blue);
+      text-decoration: none;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+    }
+
+    .lang-switch a:hover {
+      background-color: var(--bg-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="container" style="position: relative;">
+    <div class="lang-switch">
+      <a href="manual.html">English</a>
+    </div>
+    <a href="../" class="back-link">&larr; シミュレータに戻る</a>
+
+    <header>
+      <h1>XPS IRF シミュレータ</h1>
+      <p>ユーザーマニュアル</p>
+    </header>
+
+    <h2>クイックスタート</h2>
+    <ol>
+      <li>ブラウザでシミュレータを開きます</li>
+      <li>左パネルのスライダーでパラメータを調整します</li>
+      <li>チャートの変化をリアルタイムで観察します</li>
+      <li>ヘッダーのEN/日本語ボタンで言語を切り替えられます</li>
+    </ol>
+
+    <h2>インターフェース概要</h2>
+
+    <h3>左パネル：パラメータ</h3>
+    <p>サイドバーには、カテゴリ別にグループ化された調整可能なパラメータが含まれています：</p>
+
+    <div class="feature-box">
+      <h4>X線源</h4>
+      <ul>
+        <li><strong>光源分解能 (σ)</strong>：X線源のエネルギー分解能（0.01-2.0 meV）</li>
+        <li><strong>スポット幅</strong>：X線スポットの空間的広がり（0.01-2.0 mm）</li>
+        <li><strong>エネルギー歪度 (γ)</strong>：エネルギー方向の非対称性（-5〜+5）</li>
+        <li><strong>空間歪度 (γ)</strong>：空間方向の非対称性（-10〜+10）</li>
+        <li><strong>エネルギー勾配 (α)</strong>：スポット内のエネルギー変化（-0.01〜+0.01）</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>2D検出器</h4>
+      <ul>
+        <li><strong>スマイル曲率 (κ)</strong>：放物線歪み（0-0.2）</li>
+        <li><strong>検出器傾き (θ)</strong>：角度ズレ（-1°〜+1°）</li>
+        <li><strong>検出器分解能 (σ)</strong>：検出器の固有分解能（0.1-10 meV）</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>検出器ノイズ</h4>
+      <ul>
+        <li><strong>ポアソンノイズレベル</strong>：光子計数によるショットノイズ（対数スケール）</li>
+        <li><strong>ガウシアン読出しノイズ</strong>：電子ノイズ（0-10%）</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>測定条件</h4>
+      <ul>
+        <li><strong>温度</strong>：試料温度（0.1-300 K）</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>分解能まとめ</h4>
+      <p>光源と検出器の成分から計算された合成分解能を表示：</p>
+      <p style="text-align: center;"><code>σ = √(σ_source² + σ_detector²)</code></p>
+    </div>
+
+    <h3>右パネル：可視化</h3>
+
+    <div class="feature-box">
+      <h4>1Dスペクトルシミュレーション</h4>
+      <ul>
+        <li><span style="color: #EF4444;">赤</span>：観測スペクトル（ノイズあり）</li>
+        <li><span style="color: #3B82F6;">青</span>：クリーンな観測スペクトル（ノイズなし）</li>
+        <li><span style="color: #6B7280;">灰色点線</span>：理想的なフェルミ・ディラック分布</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>装置応答関数 (IRF)</h4>
+      <p>シミュレーションから抽出されたIRFの形状を表示。非対称なIRFは幾何学的歪みを示します。</p>
+    </div>
+
+    <div class="feature-box">
+      <h4>2Dスポットプロファイル</h4>
+      <p>歪度パラメータを含むX線スポット形状の可視化。</p>
+    </div>
+
+    <div class="feature-box">
+      <h4>2D検出器イメージ</h4>
+      <p>スマイル曲率と傾きの効果を示すシミュレートされた2D検出器画像。</p>
+    </div>
+
+    <h2>ヒントとベストプラクティス</h2>
+
+    <div class="tip">
+      <strong>ヒント：</strong> 個々のパラメータの効果を明確に見るには、まず他のすべてのパラメータをデフォルト値に設定し、一度に1つのパラメータのみを調整してください。
+    </div>
+
+    <div class="tip">
+      <strong>ヒント：</strong> IRFパネルは、幾何学的歪みがどのように非対称なライン形状を生み出すかを理解するのに特に役立ちます。
+    </div>
+
+    <div class="tip">
+      <strong>ヒント：</strong> フェルミ端を明確に見るには低温（< 10 K）を使用してください。室温では熱ブロードニングが支配的になります。
+    </div>
+
+    <h2>Streamlit版からの改善点</h2>
+
+    <table>
+      <tr>
+        <th>機能</th>
+        <th>Streamlit版</th>
+        <th>React版</th>
+      </tr>
+      <tr>
+        <td>応答性</td>
+        <td>スライダーリリース時に更新</td>
+        <td>ドラッグ中にリアルタイム更新</td>
+      </tr>
+      <tr>
+        <td>チャート描画</td>
+        <td>SVGベース（Matplotlib）</td>
+        <td>Canvasベース（uPlot）</td>
+      </tr>
+      <tr>
+        <td>パフォーマンス</td>
+        <td>更新あたり約500ms</td>
+        <td>更新あたり約16ms（60 FPS）</td>
+      </tr>
+      <tr>
+        <td>分解能モデル</td>
+        <td>検出器のみ</td>
+        <td>光源＋検出器の合成</td>
+      </tr>
+    </table>
+
+    <h2>トラブルシューティング</h2>
+
+    <div class="warning">
+      <strong>チャートが更新されない場合：</strong> ページを更新してみてください。問題が続く場合は、ブラウザのJavaScriptコンソールでエラーを確認してください。
+    </div>
+
+    <div class="warning">
+      <strong>パフォーマンスが遅い場合：</strong> シミュレータはモダンブラウザ向けに最適化されています。最良の結果を得るにはChrome、Firefox、またはSafariを使用してください。
+    </div>
+
+    <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-secondary);">
+      <p><a href="https://github.com/stoyoda0012-cyber/xps-irf-simulator-react" style="color: var(--accent-blue);">GitHubで見る</a></p>
+    </footer>
+  </div>
+</body>
+</html>

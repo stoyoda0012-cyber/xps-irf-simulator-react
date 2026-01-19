@@ -28,19 +28,37 @@ function App() {
           <h1>{t('title', lang)}</h1>
           <p className="subtitle">{t('subtitle', lang)}</p>
         </div>
-        <div className="lang-toggle">
-          <button
-            className={lang === 'en' ? 'active' : ''}
-            onClick={() => setLang('en')}
+        <div className="header-buttons">
+          <a
+            href={lang === 'ja' ? 'docs/concept_ja.html' : 'docs/concept.html'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="header-link"
           >
-            EN
-          </button>
-          <button
-            className={lang === 'ja' ? 'active' : ''}
-            onClick={() => setLang('ja')}
+            {t('concept', lang)}
+          </a>
+          <a
+            href={lang === 'ja' ? 'docs/manual_ja.html' : 'docs/manual.html'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="header-link"
           >
-            日本語
-          </button>
+            {t('manual', lang)}
+          </a>
+          <div className="lang-toggle">
+            <button
+              className={lang === 'en' ? 'active' : ''}
+              onClick={() => setLang('en')}
+            >
+              EN
+            </button>
+            <button
+              className={lang === 'ja' ? 'active' : ''}
+              onClick={() => setLang('ja')}
+            >
+              日本語
+            </button>
+          </div>
         </div>
       </header>
 
@@ -196,14 +214,14 @@ function App() {
                 spectrum={result.spectrum}
                 spectrumClean={result.spectrumClean}
                 idealFD={result.idealFD}
-                height={200}
+                height={210}
               />
             </div>
 
             {/* IRF */}
             <div className="chart-panel irf-panel">
               <h3>{t('irf', lang)}</h3>
-              <IRFChartCanvas energy={result.energy} irf={result.irf} height={160} />
+              <IRFChartCanvas energy={result.energy} irf={result.irf} height={210} />
             </div>
 
             {/* 2D Spot Profile */}

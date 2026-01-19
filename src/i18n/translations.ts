@@ -149,10 +149,20 @@ export const translations = {
     ja: '2D検出器イメージ',
   },
 
+  // Header buttons
+  concept: {
+    en: 'Concept',
+    ja: 'コンセプト',
+  },
+  manual: {
+    en: 'Manual',
+    ja: 'マニュアル',
+  },
+
   // Footer
   realtime: {
-    en: 'Real-time simulation powered by React + Recharts',
-    ja: 'React + Recharts によるリアルタイムシミュレーション',
+    en: 'Real-time simulation powered by React + uPlot',
+    ja: 'React + uPlot によるリアルタイムシミュレーション',
   },
 };
 

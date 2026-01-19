@@ -58,6 +58,28 @@ body {
   color: var(--text-secondary);
 }
 
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-link {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: 3px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.header-link:hover {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
 .lang-toggle {
   display: flex;
   gap: 0.25rem;
@@ -350,13 +372,32 @@ body {
 }
 
 .u-legend {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  gap: 1.5rem;
-  padding: 0.25rem 0;
   font-size: 0.7rem;
   color: var(--text-secondary);
+  text-align: center;
+}
+
+.u-legend table {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  gap: 1.5rem;
+}
+
+.u-legend tbody {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 1.5rem;
+}
+
+.u-legend tr {
+  display: flex !important;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.u-legend th,
+.u-legend td {
+  padding: 0 !important;
 }
 
 .u-series {

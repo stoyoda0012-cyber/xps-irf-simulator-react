@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XPS IRF シミュレータ - コンセプト & 物理モデル</title>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --border-color: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', sans-serif;
+      line-height: 1.8;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      color: var(--accent-blue);
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      color: var(--accent-blue);
+      margin-top: 2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h3 {
+      color: var(--accent-green);
+    }
+
+    p {
+      color: var(--text-secondary);
+    }
+
+    code {
+      background-color: var(--bg-secondary);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background-color: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+    }
+
+    pre code {
+      padding: 0;
+      background: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: var(--bg-secondary);
+      color: var(--accent-blue);
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .formula {
+      background-color: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.2em;
+      margin: 1rem 0;
+      border-left: 4px solid var(--accent-blue);
+    }
+
+    .highlight {
+      color: var(--accent-green);
+      font-weight: bold;
+    }
+
+    .lang-switch {
+      position: absolute;
+      top: 1rem;
+      right: 2rem;
+    }
+
+    .lang-switch a {
+      color: var(--accent-blue);
+      text-decoration: none;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+    }
+
+    .lang-switch a:hover {
+      background-color: var(--bg-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="container" style="position: relative;">
+    <div class="lang-switch">
+      <a href="concept.html">English</a>
+    </div>
+    <a href="../" class="back-link">&larr; シミュレータに戻る</a>
+
+    <header>
+      <h1>XPS IRF シミュレータ</h1>
+      <p>コンセプト & 物理モデル</p>
+    </header>
+
+    <h2>概要</h2>
+    <p>
+      本シミュレータは、X線光電子分光法（XPS）システムの装置応答関数（IRF: Instrumental Response Function）をモデル化します。
+      IRFは、理想的なスペクトルが測定システムによってどのようにブロードニング・歪みを受けるかを記述します。
+    </p>
+
+    <h2>座標系</h2>
+    <p>シミュレータは2D座標系を使用します：</p>
+    <ul>
+      <li><strong>X軸（エネルギー）</strong>：フェルミ準位からの束縛エネルギー（meV）</li>
+      <li><strong>Y軸（空間）</strong>：スリット方向の位置（mm）</li>
+    </ul>
+
+    <h2>物理モデル</h2>
+
+    <h3>1. フェルミ・ディラック分布</h3>
+    <p>金属のフェルミ端における理想的なスペクトルは以下に従います：</p>
+    <div class="formula">
+      f(E, T) = 1 / (1 + exp(E / kT))
+    </div>
+    <p>ここで k = 8.617 × 10⁻⁵ eV/K（ボルツマン定数）</p>
+
+    <h3>2. 合成分解能モデル</h3>
+    <p>総IRFは光源と検出器の寄与の畳み込みです：</p>
+    <div class="formula">
+      IRF<sub>total</sub> = IRF<sub>source</sub> ⊗ IRF<sub>detector</sub>
+    </div>
+    <p>ガウシアンブロードニングの場合、合成分解能は：</p>
+    <div class="formula">
+      σ<sub>combined</sub> = √(σ<sub>source</sub>² + σ<sub>detector</sub>²)
+    </div>
+
+    <h3>3. X線源パラメータ</h3>
+    <table>
+      <tr>
+        <th>パラメータ</th>
+        <th>記号</th>
+        <th>説明</th>
+      </tr>
+      <tr>
+        <td>光源分解能</td>
+        <td>σ<sub>src</sub></td>
+        <td>X線源の固有エネルギー分解能（meV）</td>
+      </tr>
+      <tr>
+        <td>スポット幅</td>
+        <td>σ<sub>Y</sub></td>
+        <td>試料上のX線スポットの空間的広がり（mm）</td>
+      </tr>
+      <tr>
+        <td>エネルギー歪度</td>
+        <td>γ<sub>E</sub></td>
+        <td>光源エネルギー分布の非対称性</td>
+      </tr>
+      <tr>
+        <td>空間歪度</td>
+        <td>γ<sub>Y</sub></td>
+        <td>スポット空間分布の非対称性</td>
+      </tr>
+      <tr>
+        <td>エネルギー勾配</td>
+        <td>α</td>
+        <td>スポット内のエネルギー変化（dE/dy）</td>
+      </tr>
+    </table>
+
+    <h3>4. 2D検出器パラメータ</h3>
+    <table>
+      <tr>
+        <th>パラメータ</th>
+        <th>記号</th>
+        <th>説明</th>
+      </tr>
+      <tr>
+        <td>スマイル曲率</td>
+        <td>κ</td>
+        <td>アナライザー収差による放物線歪み</td>
+      </tr>
+      <tr>
+        <td>検出器傾き</td>
+        <td>θ</td>
+        <td>検出器取り付け角度のズレ</td>
+      </tr>
+      <tr>
+        <td>検出器分解能</td>
+        <td>σ<sub>det</sub></td>
+        <td>2D検出器の固有分解能（meV）</td>
+      </tr>
+    </table>
+
+    <h2>シミュレーションパイプライン</h2>
+    <ol>
+      <li><strong>フェルミ・ディラック分布</strong>：指定温度での理想的なステップ関数を生成</li>
+      <li><strong>2D発光</strong>：X線スポットの空間分布を通してスペクトルを投影</li>
+      <li><strong>検出器歪み</strong>：スマイル曲率と傾きの変換を適用</li>
+      <li><strong>分解能畳み込み</strong>：光源と検出器のガウシアンカーネルで畳み込み</li>
+      <li><strong>1D投影</strong>：空間軸に沿って積算し、観測スペクトルを取得</li>
+      <li><strong>ノイズ付加</strong>：ポアソンおよびガウシアンノイズを適用</li>
+    </ol>
+
+    <h2>重要な洞察</h2>
+    <p class="highlight">
+      本シミュレータは、幾何学的歪み（スマイル、傾き）と分解能成分（光源、検出器）が
+      どのように組み合わさって観測されるIRF非対称性を生み出すかを示します。
+      パラメータをインタラクティブに調整することで、各成分が測定スペクトルに
+      どのような影響を与えるかを理解できます。
+    </p>
+
+    <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-secondary);">
+      <p><a href="https://github.com/stoyoda0012-cyber/xps-irf-simulator-react" style="color: var(--accent-blue);">GitHubで見る</a></p>
+    </footer>
+  </div>
+</body>
+</html>

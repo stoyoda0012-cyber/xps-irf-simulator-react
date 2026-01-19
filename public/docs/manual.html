@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XPS IRF Simulator - User Manual</title>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --border-color: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      color: var(--accent-blue);
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      color: var(--accent-blue);
+      margin-top: 2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h3 {
+      color: var(--accent-green);
+    }
+
+    p, li {
+      color: var(--text-secondary);
+    }
+
+    code {
+      background-color: var(--bg-secondary);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background-color: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+    }
+
+    pre code {
+      padding: 0;
+      background: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border-color);
+    }
+
+    th {
+      background-color: var(--bg-secondary);
+      color: var(--accent-blue);
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .tip {
+      background-color: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent-green);
+      margin: 1rem 0;
+    }
+
+    .warning {
+      background-color: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent-red);
+      margin: 1rem 0;
+    }
+
+    .feature-box {
+      background-color: var(--bg-secondary);
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 0.5rem 0;
+    }
+
+    .feature-box h4 {
+      color: var(--accent-blue);
+      margin: 0 0 0.5rem 0;
+    }
+
+    .lang-switch {
+      position: absolute;
+      top: 1rem;
+      right: 2rem;
+    }
+
+    .lang-switch a {
+      color: var(--accent-blue);
+      text-decoration: none;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+    }
+
+    .lang-switch a:hover {
+      background-color: var(--bg-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="container" style="position: relative;">
+    <div class="lang-switch">
+      <a href="manual_ja.html">日本語</a>
+    </div>
+    <a href="../" class="back-link">&larr; Back to Simulator</a>
+
+    <header>
+      <h1>XPS IRF Simulator</h1>
+      <p>User Manual</p>
+    </header>
+
+    <h2>Quick Start</h2>
+    <ol>
+      <li>Open the simulator in your browser</li>
+      <li>Adjust parameters using the sliders on the left panel</li>
+      <li>Observe real-time changes in the charts</li>
+      <li>Switch language using EN/日本語 buttons in the header</li>
+    </ol>
+
+    <h2>Interface Overview</h2>
+
+    <h3>Left Panel: Parameters</h3>
+    <p>The sidebar contains all adjustable parameters grouped by category:</p>
+
+    <div class="feature-box">
+      <h4>X-ray Source</h4>
+      <ul>
+        <li><strong>Source Resolution (σ)</strong>: Energy resolution of the X-ray source (0.01-2.0 meV)</li>
+        <li><strong>Spot Width</strong>: Spatial extent of the X-ray spot (0.01-2.0 mm)</li>
+        <li><strong>Energy Skew (γ)</strong>: Asymmetry in energy direction (-5 to +5)</li>
+        <li><strong>Spatial Skew (γ)</strong>: Asymmetry in spatial direction (-10 to +10)</li>
+        <li><strong>Energy Gradient (α)</strong>: Energy variation across spot (-0.01 to +0.01)</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>2D Detector</h4>
+      <ul>
+        <li><strong>Smile Curvature (κ)</strong>: Parabolic distortion (0-0.2)</li>
+        <li><strong>Detector Tilt (θ)</strong>: Angular misalignment (-1° to +1°)</li>
+        <li><strong>Detector Resolution (σ)</strong>: Intrinsic detector resolution (0.1-10 meV)</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>Detector Noise</h4>
+      <ul>
+        <li><strong>Poisson Noise Level</strong>: Shot noise from photon counting (log scale)</li>
+        <li><strong>Gaussian Readout Noise</strong>: Electronic noise (0-10%)</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>Measurement</h4>
+      <ul>
+        <li><strong>Temperature</strong>: Sample temperature (0.1-300 K)</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>Resolution Summary</h4>
+      <p>Shows the combined resolution calculated from source and detector components:</p>
+      <p style="text-align: center;"><code>σ = √(σ_source² + σ_detector²)</code></p>
+    </div>
+
+    <h3>Right Panel: Visualizations</h3>
+
+    <div class="feature-box">
+      <h4>1D Spectrum Simulation</h4>
+      <ul>
+        <li><span style="color: #EF4444;">Red</span>: Observed spectrum (with noise)</li>
+        <li><span style="color: #3B82F6;">Blue</span>: Clean observed spectrum (no noise)</li>
+        <li><span style="color: #6B7280;">Gray dashed</span>: Ideal Fermi-Dirac distribution</li>
+      </ul>
+    </div>
+
+    <div class="feature-box">
+      <h4>Instrumental Response Function (IRF)</h4>
+      <p>Shows the shape of the IRF extracted from the simulation. Asymmetric IRF indicates geometric distortions.</p>
+    </div>
+
+    <div class="feature-box">
+      <h4>2D Spot Profile</h4>
+      <p>Visualization of the X-ray spot shape including skewness parameters.</p>
+    </div>
+
+    <div class="feature-box">
+      <h4>2D Detector Image</h4>
+      <p>Simulated 2D detector image showing the effect of smile curvature and tilt.</p>
+    </div>
+
+    <h2>Tips & Best Practices</h2>
+
+    <div class="tip">
+      <strong>Tip:</strong> To see the effect of individual parameters clearly, set all other parameters to their default values first, then adjust one parameter at a time.
+    </div>
+
+    <div class="tip">
+      <strong>Tip:</strong> The IRF panel is particularly useful for understanding how geometric distortions create asymmetric line shapes.
+    </div>
+
+    <div class="tip">
+      <strong>Tip:</strong> Use low temperature (< 10 K) to see the Fermi edge clearly. At room temperature, thermal broadening dominates.
+    </div>
+
+    <h2>Improvements from Streamlit Version</h2>
+
+    <table>
+      <tr>
+        <th>Feature</th>
+        <th>Streamlit</th>
+        <th>React</th>
+      </tr>
+      <tr>
+        <td>Interactivity</td>
+        <td>Updates on slider release</td>
+        <td>Real-time updates during drag</td>
+      </tr>
+      <tr>
+        <td>Chart Rendering</td>
+        <td>SVG-based (Matplotlib)</td>
+        <td>Canvas-based (uPlot)</td>
+      </tr>
+      <tr>
+        <td>Performance</td>
+        <td>~500ms per update</td>
+        <td>~16ms per update (60 FPS)</td>
+      </tr>
+      <tr>
+        <td>Resolution Model</td>
+        <td>Detector only</td>
+        <td>Source + Detector combined</td>
+      </tr>
+    </table>
+
+    <h2>Keyboard Shortcuts</h2>
+    <p>Currently, the simulator is fully mouse/touch operated. Keyboard shortcuts may be added in future versions.</p>
+
+    <h2>Troubleshooting</h2>
+
+    <div class="warning">
+      <strong>Charts not updating?</strong> Try refreshing the page. If the issue persists, check your browser's JavaScript console for errors.
+    </div>
+
+    <div class="warning">
+      <strong>Slow performance?</strong> The simulator is optimized for modern browsers. Try using Chrome, Firefox, or Safari for best results.
+    </div>
+
+    <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-secondary);">
+      <p><a href="https://github.com/stoyoda0012-cyber/xps-irf-simulator-react" style="color: var(--accent-blue);">View on GitHub</a></p>
+    </footer>
+  </div>
+</body>
+</html>
