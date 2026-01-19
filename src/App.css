@@ -1,0 +1,410 @@
+/* XPS IRF Simulator - Main Styles */
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --accent-blue: #3b82f6;
+  --accent-red: #ef4444;
+  --accent-green: #22c55e;
+  --border-color: #475569;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+#root {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  background-color: var(--bg-secondary);
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  margin: 0.15rem 0 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.lang-toggle {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.lang-toggle button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lang-toggle button:hover {
+  background-color: var(--border-color);
+}
+
+.lang-toggle button.active {
+  background-color: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+}
+
+/* Main Container */
+.main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  background-color: var(--bg-secondary);
+  padding: 0.75rem;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-color);
+}
+
+.param-section {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.param-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.param-section h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: var(--accent-blue);
+}
+
+/* Slider Component */
+.slider-container {
+  margin-bottom: 0.5rem;
+}
+
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.15rem;
+}
+
+.slider-label {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.slider-value {
+  font-size: 0.75rem;
+  color: var(--accent-blue);
+  font-family: monospace;
+}
+
+.slider-input {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-tertiary);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.slider-input::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  cursor: pointer;
+  border: none;
+}
+
+/* Resolution Summary */
+.resolution-summary {
+  background-color: var(--bg-tertiary);
+  border-radius: 4px;
+  padding: 0.5rem !important;
+  margin-top: 0.5rem;
+}
+
+.resolution-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+}
+
+.resolution-label {
+  color: var(--text-secondary);
+}
+
+.resolution-value {
+  font-family: monospace;
+  color: var(--text-primary);
+}
+
+.resolution-item.combined {
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.25rem;
+  padding-top: 0.4rem;
+}
+
+.resolution-item.combined .resolution-label {
+  font-weight: bold;
+  color: var(--accent-green);
+}
+
+.resolution-item.combined .resolution-value {
+  font-weight: bold;
+  color: var(--accent-green);
+}
+
+.resolution-formula {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 0.4rem;
+  font-style: italic;
+}
+
+/* Main Content */
+.content {
+  flex: 1;
+  padding: 0.75rem;
+  overflow-y: auto;
+  background-color: var(--bg-primary);
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 0.5rem;
+}
+
+.chart-panel {
+  background-color: var(--bg-secondary);
+  border-radius: 6px;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.chart-panel h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.spectrum-panel {
+  grid-column: 1 / -1;
+}
+
+.irf-panel {
+  grid-column: 1 / -1;
+}
+
+/* HeatMap */
+.heatmap-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.heatmap-title {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.heatmap-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.heatmap-y-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-right: 0.5rem;
+}
+
+.heatmap-content {
+  display: flex;
+}
+
+.heatmap-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-right: 0.25rem;
+  padding: 0.25rem 0;
+}
+
+.heatmap-canvas {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.heatmap-canvas-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.heatmap-x-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  margin-top: 0.15rem;
+}
+
+.heatmap-x-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  margin-top: 0.15rem;
+  text-align: center;
+}
+
+/* Footer */
+.footer {
+  background-color: var(--bg-secondary);
+  padding: 0.35rem;
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+}
+
+.footer p {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+/* uPlot customization */
+.uplot-container {
+  width: 100%;
+}
+
+.uplot {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.u-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.u-series {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.u-marker {
+  width: 12px;
+  height: 3px;
+}
+
+/* Recharts customization (kept for reference) */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--border-color);
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .heatmap-panel {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
