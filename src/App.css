@@ -351,10 +351,11 @@ body {
 
 .u-legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding: 0.5rem 0;
-  font-size: 0.75rem;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.7rem;
   color: var(--text-secondary);
 }
 
@@ -362,6 +363,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  white-space: nowrap;
 }
 
 .u-marker {

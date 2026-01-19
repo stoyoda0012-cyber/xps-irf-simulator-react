@@ -203,7 +203,7 @@ function App() {
             {/* IRF */}
             <div className="chart-panel irf-panel">
               <h3>{t('irf', lang)}</h3>
-              <IRFChartCanvas energy={result.energy} irf={result.irf} height={120} />
+              <IRFChartCanvas energy={result.energy} irf={result.irf} height={160} />
             </div>
 
             {/* 2D Spot Profile */}
