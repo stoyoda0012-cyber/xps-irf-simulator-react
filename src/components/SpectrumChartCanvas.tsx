@@ -7,9 +7,11 @@ interface SpectrumChartCanvasProps {
   spectrum: number[];
   spectrumClean: number[];
   idealFD: number[];
+  fittedSpectrum?: number[] | null;
   showNoise?: boolean;
   showIdeal?: boolean;
   showClean?: boolean;
+  showFitted?: boolean;
   height?: number;
 }
 
@@ -18,9 +20,11 @@ export const SpectrumChartCanvas: React.FC<SpectrumChartCanvasProps> = ({
   spectrum,
   spectrumClean,
   idealFD,
+  fittedSpectrum = null,
   showNoise = true,
   showIdeal = true,
   showClean = true,
+  showFitted = true,
   height = 280,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -34,13 +38,35 @@ export const SpectrumChartCanvas: React.FC<SpectrumChartCanvasProps> = ({
     const downsample = (arr: number[]) =>
       arr.filter((_, i) => i % step === 0);
 
-    return [
+    // fittedSpectrum may have different length (from fitting), need to interpolate or pad
+    let fittedData: number[] | null = null;
+    if (fittedSpectrum && fittedSpectrum.length > 0) {
+      // If fitted spectrum has same length as energy, just downsample
+      if (fittedSpectrum.length === energy.length) {
+        fittedData = downsample(fittedSpectrum);
+      } else {
+        // Simple linear interpolation to match energy axis
+        fittedData = downsample(energy).map((_, i) => {
+          const ratio = i / (targetPoints - 1);
+          const srcIdx = ratio * (fittedSpectrum.length - 1);
+          const idx0 = Math.floor(srcIdx);
+          const idx1 = Math.min(idx0 + 1, fittedSpectrum.length - 1);
+          const t = srcIdx - idx0;
+          return fittedSpectrum[idx0] * (1 - t) + fittedSpectrum[idx1] * t;
+        });
+      }
+    }
+
+    const data: (number[] | null)[] = [
       downsample(energy),
       downsample(spectrum),
       downsample(spectrumClean),
       downsample(idealFD),
-    ] as uPlot.AlignedData;
-  }, [energy, spectrum, spectrumClean, idealFD]);
+      fittedData,
+    ];
+
+    return data as uPlot.AlignedData;
+  }, [energy, spectrum, spectrumClean, idealFD, fittedSpectrum]);
 
   // Chart options
   const options = useMemo((): uPlot.Options => ({
@@ -100,11 +126,18 @@ export const SpectrumChartCanvas: React.FC<SpectrumChartCanvasProps> = ({
         dash: [5, 5],
         show: showIdeal,
       },
+      // Fitted curve
+      {
+        label: 'Fitted',
+        stroke: '#22C55E',
+        width: 2,
+        show: showFitted && fittedSpectrum !== null,
+      },
     ],
     legend: {
       show: true,
     },
-  }), [height, showNoise, showClean, showIdeal]);
+  }), [height, showNoise, showClean, showIdeal, showFitted, fittedSpectrum]);
 
   // Initialize chart
   useEffect(() => {

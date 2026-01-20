@@ -161,8 +161,90 @@ export const translations = {
 
   // Footer
   realtime: {
-    en: 'Real-time simulation powered by React + uPlot',
-    ja: 'React + uPlot によるリアルタイムシミュレーション',
+    en: 'Real-time simulation powered by React + Canvas',
+    ja: 'React + Canvas によるリアルタイムシミュレーション',
+  },
+
+  // Fitting Panel
+  fitting: {
+    en: 'Inverse Problem Analysis',
+    ja: '逆問題解析',
+  },
+  fermiFitting: {
+    en: 'Fermi Edge Fitting',
+    ja: 'フェルミ端フィッティング',
+  },
+  irfEstimation: {
+    en: 'IRF Parameter Estimation',
+    ja: 'IRFパラメータ推定',
+  },
+  fermiFittingDesc: {
+    en: 'Fit observed spectrum with Fermi-Dirac × Gaussian convolution model to extract total resolution.',
+    ja: '観測スペクトルをフェルミ・ディラック×ガウシアン畳み込みモデルでフィッティングし、合計分解能を抽出します。',
+  },
+  irfEstimationDesc: {
+    en: 'Estimate geometric IRF parameters (κ, θ, σ, α, etc.) from observed spectrum using Differential Evolution.',
+    ja: 'Differential Evolutionを用いて、観測スペクトルからIRFの幾何学的パラメータ（κ, θ, σ, αなど）を推定します。',
+  },
+  fitTemperature: {
+    en: 'Fit temperature as free parameter',
+    ja: '温度を自由パラメータとしてフィッティング',
+  },
+  runFitting: {
+    en: 'Run Fitting',
+    ja: 'フィッティング実行',
+  },
+  runEstimation: {
+    en: 'Run Estimation',
+    ja: '推定実行',
+  },
+  running: {
+    en: 'Running...',
+    ja: '実行中...',
+  },
+  cancel: {
+    en: 'Cancel',
+    ja: 'キャンセル',
+  },
+  results: {
+    en: 'Results',
+    ja: '結果',
+  },
+  estimatedParams: {
+    en: 'Estimated Parameters',
+    ja: '推定パラメータ',
+  },
+  efShift: {
+    en: 'E_F Shift',
+    ja: 'E_F シフト',
+  },
+  totalResolution: {
+    en: 'Total Resolution (σ)',
+    ja: '合計分解能 (σ)',
+  },
+  fittedTemp: {
+    en: 'Fitted Temperature',
+    ja: 'フィッティング温度',
+  },
+  iteration: {
+    en: 'Iteration',
+    ja: 'イテレーション',
+  },
+  fitness: {
+    en: 'Fitness',
+    ja: 'フィットネス',
+  },
+  evaluations: {
+    en: 'Evaluations',
+    ja: '評価回数',
+  },
+  applyParams: {
+    en: 'Apply to Simulator',
+    ja: 'シミュレータに適用',
+  },
+  fittingError: {
+    en: 'An error occurred during fitting.',
+    ja: 'フィッティング中にエラーが発生しました。',
   },
 };
 

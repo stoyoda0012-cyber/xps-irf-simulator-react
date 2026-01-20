@@ -4,6 +4,7 @@ import type { SimulatorParams } from './lib/simulator';
 import { SpectrumChartCanvas, IRFChartCanvas } from './components/SpectrumChartCanvas';
 import { HeatMap } from './components/HeatMap';
 import { Slider } from './components/Slider';
+import { FittingPanel } from './components/FittingPanel';
 import { t } from './i18n/translations';
 import type { Language } from './i18n/translations';
 import './App.css';
@@ -11,10 +12,24 @@ import './App.css';
 function App() {
   const [lang, setLang] = useState<Language>('en');
   const [params, setParams] = useState<SimulatorParams>(defaultParams);
+  const [fittedSpectrum, setFittedSpectrum] = useState<number[] | null>(null);
 
   // Update a single parameter
   const updateParam = useCallback((key: keyof SimulatorParams, value: number) => {
     setParams(prev => ({ ...prev, [key]: value }));
+    // Clear fitted spectrum when parameters change
+    setFittedSpectrum(null);
+  }, []);
+
+  // Apply multiple parameters (from IRF estimation)
+  const applyParams = useCallback((newParams: Partial<SimulatorParams>) => {
+    setParams(prev => ({ ...prev, ...newParams }));
+    setFittedSpectrum(null);
+  }, []);
+
+  // Handle fit result from FittingPanel
+  const handleFitResult = useCallback((fitted: number[] | null) => {
+    setFittedSpectrum(fitted);
   }, []);
 
   // Run simulation (memoized for performance)
@@ -201,6 +216,16 @@ function App() {
               σ = √(σ<sub>src</sub>² + σ<sub>det</sub>²)
             </div>
           </section>
+
+          {/* Fitting Panel */}
+          <FittingPanel
+            energy={result.energy}
+            observedSpectrum={result.spectrum}
+            temp={params.temp}
+            lang={lang}
+            onApplyIRFParams={applyParams}
+            onFitResult={handleFitResult}
+          />
         </aside>
 
         {/* Main Content */}
@@ -214,6 +239,7 @@ function App() {
                 spectrum={result.spectrum}
                 spectrumClean={result.spectrumClean}
                 idealFD={result.idealFD}
+                fittedSpectrum={fittedSpectrum}
                 height={210}
               />
             </div>
