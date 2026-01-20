@@ -68,6 +68,24 @@ export const SpectrumChartCanvas: React.FC<SpectrumChartCanvasProps> = ({
     return data as uPlot.AlignedData;
   }, [energy, spectrum, spectrumClean, idealFD, fittedSpectrum]);
 
+  // Calculate y-axis range from all visible data
+  const yRange = useMemo(() => {
+    let maxVal = 1.1;
+    if (showNoise && spectrum.length > 0) {
+      maxVal = Math.max(maxVal, ...spectrum);
+    }
+    if (showClean && spectrumClean.length > 0) {
+      maxVal = Math.max(maxVal, ...spectrumClean);
+    }
+    if (showIdeal && idealFD.length > 0) {
+      maxVal = Math.max(maxVal, ...idealFD);
+    }
+    if (showFitted && fittedSpectrum && fittedSpectrum.length > 0) {
+      maxVal = Math.max(maxVal, ...fittedSpectrum);
+    }
+    return { min: 0, max: maxVal * 1.05 }; // 5% margin
+  }, [spectrum, spectrumClean, idealFD, fittedSpectrum, showNoise, showClean, showIdeal, showFitted]);
+
   // Chart options
   const options = useMemo((): uPlot.Options => ({
     width: 800,
@@ -78,7 +96,7 @@ export const SpectrumChartCanvas: React.FC<SpectrumChartCanvasProps> = ({
     },
     scales: {
       x: { time: false, min: -100, max: 100 },
-      y: { auto: true, min: 0, max: 1.1 },
+      y: { auto: false, min: yRange.min, max: yRange.max },
     },
     axes: [
       {
@@ -137,7 +155,7 @@ export const SpectrumChartCanvas: React.FC<SpectrumChartCanvasProps> = ({
     legend: {
       show: true,
     },
-  }), [height, showNoise, showClean, showIdeal, showFitted, fittedSpectrum]);
+  }), [height, showNoise, showClean, showIdeal, showFitted, fittedSpectrum, yRange]);
 
   // Initialize chart
   useEffect(() => {
