@@ -645,7 +645,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
                 <span>Points:</span>
                 <span style={{ color: '#22d3ee' }}>{nPoints}</span>
               </label>
-              <input type="range" min={50} max={2000} step={50} value={nPoints}
+              <input type="range" min={100} max={10000} step={100} value={nPoints}
                 onChange={e => setNPoints(parseInt(e.target.value))}
                 style={{ width: '100%', accentColor: '#6495ed' }}
               />
@@ -655,7 +655,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
                 <span>Elements:</span>
                 <span style={{ color: '#22d3ee' }}>{nElements}</span>
               </label>
-              <input type="range" min={1} max={10} value={nElements}
+              <input type="range" min={1} max={20} value={nElements}
                 onChange={e => setNElements(parseInt(e.target.value))}
                 style={{ width: '100%', accentColor: '#6495ed' }}
               />
