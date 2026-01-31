@@ -21,6 +21,13 @@ Chart.defaults.color = colors.text;
 Chart.defaults.borderColor = colors.grid;
 
 /**
+ * Convert parallel arrays to {x, y} point array
+ */
+function toPointArray(xArr, yArr) {
+    return xArr.map((x, i) => ({ x: x, y: yArr[i] }));
+}
+
+/**
  * Initialize charts on page load
  */
 function initCharts() {
@@ -69,11 +76,10 @@ function createSpectrumChart(data) {
     spectrumChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.energy,
             datasets: [
                 {
                     label: 'Observed (with noise)',
-                    data: data.spectrum,
+                    data: toPointArray(data.energy, data.spectrum),
                     borderColor: colors.observed,
                     backgroundColor: 'transparent',
                     borderWidth: 1.5,
@@ -82,7 +88,7 @@ function createSpectrumChart(data) {
                 },
                 {
                     label: 'Clean',
-                    data: data.spectrum_clean,
+                    data: toPointArray(data.energy, data.spectrum_clean),
                     borderColor: colors.clean,
                     backgroundColor: 'transparent',
                     borderWidth: 1.5,
@@ -91,7 +97,7 @@ function createSpectrumChart(data) {
                 },
                 {
                     label: 'Ideal Fermi-Dirac',
-                    data: data.ideal_fd,
+                    data: toPointArray(data.energy, data.ideal_fd),
                     borderColor: colors.ideal,
                     backgroundColor: 'transparent',
                     borderWidth: 1.5,
@@ -129,6 +135,7 @@ function createSpectrumChart(data) {
             },
             scales: {
                 x: {
+                    type: 'linear',
                     title: {
                         display: true,
                         text: 'Energy (meV)',
@@ -137,12 +144,10 @@ function createSpectrumChart(data) {
                     grid: { color: colors.grid },
                     ticks: {
                         font: { size: 10 },
-                        maxTicksLimit: 10,
-                        callback: function(value, index) {
-                            const label = this.getLabelForValue(value);
-                            return Math.round(parseFloat(label));
-                        }
+                        stepSize: 20,
                     },
+                    min: -100,
+                    max: 100,
                 },
                 y: {
                     title: {
@@ -169,10 +174,9 @@ function updateSpectrumChart(data) {
         return;
     }
 
-    spectrumChart.data.labels = data.energy;
-    spectrumChart.data.datasets[0].data = data.spectrum;
-    spectrumChart.data.datasets[1].data = data.spectrum_clean;
-    spectrumChart.data.datasets[2].data = data.ideal_fd;
+    spectrumChart.data.datasets[0].data = toPointArray(data.energy, data.spectrum);
+    spectrumChart.data.datasets[1].data = toPointArray(data.energy, data.spectrum_clean);
+    spectrumChart.data.datasets[2].data = toPointArray(data.energy, data.ideal_fd);
     spectrumChart.update('none'); // Update without animation
 }
 
@@ -191,11 +195,10 @@ function createIRFChart(data) {
     irfChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.energy,
             datasets: [
                 {
                     label: 'IRF',
-                    data: data.irf,
+                    data: toPointArray(data.energy, data.irf),
                     borderColor: colors.irf,
                     backgroundColor: 'rgba(34, 197, 94, 0.1)',
                     borderWidth: 2,
@@ -222,6 +225,7 @@ function createIRFChart(data) {
             },
             scales: {
                 x: {
+                    type: 'linear',
                     title: {
                         display: true,
                         text: 'Energy (meV)',
@@ -230,12 +234,10 @@ function createIRFChart(data) {
                     grid: { color: colors.grid },
                     ticks: {
                         font: { size: 10 },
-                        maxTicksLimit: 10,
-                        callback: function(value, index) {
-                            const label = this.getLabelForValue(value);
-                            return Math.round(parseFloat(label));
-                        }
+                        stepSize: 20,
                     },
+                    min: -100,
+                    max: 100,
                 },
                 y: {
                     title: {
@@ -262,8 +264,7 @@ function updateIRFChart(data) {
         return;
     }
 
-    irfChart.data.labels = data.energy;
-    irfChart.data.datasets[0].data = data.irf;
+    irfChart.data.datasets[0].data = toPointArray(data.energy, data.irf);
     irfChart.update('none');
 }
 
