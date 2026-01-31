@@ -159,6 +159,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
   // uPlot参照
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const uplotRef = useRef<uPlot | null>(null);
+  const prevSeriesCountRef = useRef<number>(0);
 
   // AbortController参照
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -367,12 +368,15 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
 
   // uPlot初期化・更新
   useEffect(() => {
-    if (!chartContainerRef.current || xData.length === 0) return;
+    if (!chartContainerRef.current || xData.length === 0 || yData.length === 0) return;
+
+    // yDataの実際の長さに基づいてシリーズを定義（nElementsとの不一致を防ぐ）
+    const actualElements = yData.length;
 
     // シリーズ定義
     const series: uPlot.Series[] = [
       { label: 'Energy (eV)' },
-      ...Array.from({ length: nElements }, (_, i) => ({
+      ...Array.from({ length: actualElements }, (_, i) => ({
         label: `Element ${i + 1}`,
         stroke: ELEMENT_COLORS[i % ELEMENT_COLORS.length],
         width: 2,
@@ -439,19 +443,36 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
       series
     };
 
-    // 既存のプロットがあれば更新、なければ作成
-    if (uplotRef.current) {
-      if (uplotRef.current.series.length !== series.length) {
-        uplotRef.current.destroy();
-        uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
-      } else {
-        uplotRef.current.setData(plotData);
-        uplotRef.current.setScale('y', { min: yMin - yPadding, max: yMax + yPadding });
+    // シリーズ数が変わったかチェック（+1はx軸用）
+    const newSeriesCount = actualElements + 1;
+    const needsRecreate = prevSeriesCountRef.current !== newSeriesCount;
+
+    // 常に古いuPlotを破棄してから新しいものを作成（シリーズ数変更時）
+    if (needsRecreate || !uplotRef.current) {
+      // 既存のuPlotを破棄
+      if (uplotRef.current) {
+        try {
+          uplotRef.current.destroy();
+        } catch {
+          // destroy失敗は無視
+        }
+        uplotRef.current = null;
       }
-    } else {
+
+      // コンテナを完全にクリア
+      if (chartContainerRef.current) {
+        chartContainerRef.current.innerHTML = '';
+      }
+
+      // 新しいuPlotを作成
       uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
+      prevSeriesCountRef.current = newSeriesCount;
+    } else {
+      // シリーズ数が同じ場合はデータのみ更新（高速）
+      uplotRef.current.setData(plotData);
+      uplotRef.current.setScale('y', { min: yMin - yPadding, max: yMax + yPadding });
     }
-  }, [xData, yData, nElements]);
+  }, [xData, yData]);
 
   // ウィンドウリサイズ対応
   useEffect(() => {
@@ -624,7 +645,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
                 <span>Points:</span>
                 <span style={{ color: '#22d3ee' }}>{nPoints}</span>
               </label>
-              <input type="range" min={10} max={500} step={10} value={nPoints}
+              <input type="range" min={50} max={2000} step={50} value={nPoints}
                 onChange={e => setNPoints(parseInt(e.target.value))}
                 style={{ width: '100%', accentColor: '#6495ed' }}
               />
@@ -634,7 +655,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
                 <span>Elements:</span>
                 <span style={{ color: '#22d3ee' }}>{nElements}</span>
               </label>
-              <input type="range" min={1} max={5} value={nElements}
+              <input type="range" min={1} max={10} value={nElements}
                 onChange={e => setNElements(parseInt(e.target.value))}
                 style={{ width: '100%', accentColor: '#6495ed' }}
               />
