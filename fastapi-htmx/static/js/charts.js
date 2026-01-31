@@ -34,12 +34,24 @@ function initCharts() {
 }
 
 /**
- * Update all charts with new data
+ * Update all charts with new data (called after htmx swap)
  */
 function updateCharts(data) {
-    updateSpectrumChart(data);
-    updateIRFChart(data);
-    // Heatmaps would need 2D data - simplified for now
+    // After htmx swap, canvas elements are new - must recreate charts
+    // Destroy old instances first
+    if (spectrumChart) {
+        spectrumChart.destroy();
+        spectrumChart = null;
+    }
+    if (irfChart) {
+        irfChart.destroy();
+        irfChart = null;
+    }
+
+    // Create new charts with new canvas elements
+    createSpectrumChart(data);
+    createIRFChart(data);
+    createHeatmaps();
 }
 
 /**
@@ -123,7 +135,14 @@ function createSpectrumChart(data) {
                         font: { size: 11 },
                     },
                     grid: { color: colors.grid },
-                    ticks: { font: { size: 10 } },
+                    ticks: {
+                        font: { size: 10 },
+                        maxTicksLimit: 10,
+                        callback: function(value, index) {
+                            const label = this.getLabelForValue(value);
+                            return Math.round(parseFloat(label));
+                        }
+                    },
                 },
                 y: {
                     title: {
@@ -209,7 +228,14 @@ function createIRFChart(data) {
                         font: { size: 11 },
                     },
                     grid: { color: colors.grid },
-                    ticks: { font: { size: 10 } },
+                    ticks: {
+                        font: { size: 10 },
+                        maxTicksLimit: 10,
+                        callback: function(value, index) {
+                            const label = this.getLabelForValue(value);
+                            return Math.round(parseFloat(label));
+                        }
+                    },
                 },
                 y: {
                     title: {
