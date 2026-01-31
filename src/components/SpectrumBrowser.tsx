@@ -1,5 +1,5 @@
 /**
- * Spectrum Browser - 爆速スペクトル・ブラウザー
+ * Spectrum Browser - 爆速スペクトル・ブラウザー（デモモード対応）
  *
  * 「指に吸い付くような」ブラウジング体験を実現するための最適化:
  * 1. Throttling: マウスイベントの発生頻度を制限（16ms or 32ms間隔）
@@ -57,6 +57,58 @@ const ELEMENT_COLORS = [
   '#c7f2a4', // ライム
 ];
 
+// ===== ローカル計算用関数（デモモード用） =====
+
+/**
+ * Pseudo-Voigt近似 - 高速なVoigt関数近似
+ */
+function pseudoVoigt(x: number, center: number, sigma: number, gamma: number): number {
+  const fG = 2.0 * sigma * Math.sqrt(2.0 * Math.log(2.0));
+  const fL = 2.0 * gamma;
+  const fV = 0.5346 * fL + Math.sqrt(0.2166 * fL * fL + fG * fG);
+
+  let eta = 0;
+  if (fV > 0) {
+    const ratio = fL / fV;
+    eta = 1.36603 * ratio - 0.47719 * ratio * ratio + 0.11116 * ratio * ratio * ratio;
+  }
+  eta = Math.max(0, Math.min(1, eta));
+
+  const gaussian = sigma > 0 ? Math.exp(-0.5 * Math.pow((x - center) / sigma, 2)) : 0;
+  const lorentzian = gamma > 0 ? 1.0 / (1.0 + Math.pow((x - center) / gamma, 2)) : 0;
+
+  return eta * lorentzian + (1 - eta) * gaussian;
+}
+
+/**
+ * 単一元素のスペクトルを生成
+ */
+function generateSpectrum(
+  xArray: number[],
+  p1: number,
+  p2: number,
+  elementIdx: number
+): number[] {
+  const basePositions = [0, 100, 200, 350, 500];
+  const basePos = basePositions[elementIdx % basePositions.length];
+  const center = basePos + p1 * 50;
+  const sigma = 5 + (1 - p2) * 10;
+  const gamma = 2 + (1 - p2) * 5;
+  const intensity = 0.5 + p2 * 0.5;
+
+  return xArray.map(x => {
+    let value = intensity * pseudoVoigt(x, center, sigma, gamma);
+    // サテライトピーク
+    const satOffset = 20 + elementIdx * 5;
+    value += 0.3 * intensity * pseudoVoigt(x, center + satOffset, sigma * 1.5, gamma * 1.5);
+    // バックグラウンド
+    value += 0.05 * (1 - Math.exp(-0.01 * (x - center + 100)));
+    return value;
+  });
+}
+
+// ===== コンポーネント =====
+
 interface SpectrumBrowserProps {
   /** スロットル間隔 (ms) - デフォルト16ms (60FPS) */
   throttleMs?: number;
@@ -66,20 +118,24 @@ interface SpectrumBrowserProps {
   nSpectra?: number;
   /** 元素数 */
   nElements?: number;
+  /** デモモード（バックエンドなしで動作） */
+  demoMode?: boolean;
 }
 
 export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
   throttleMs = 16,
   nPoints: initialNPoints = 100,
   nSpectra: initialNSpectra = 1,
-  nElements: initialNElements = 1
+  nElements: initialNElements = 1,
+  demoMode = false
 }) => {
   // パラメータ状態
   const [p1, setP1] = useState(0);
   const [p2, setP2] = useState(0);
   const [nPoints, setNPoints] = useState(initialNPoints);
-  const [nSpectra, setNSpectra] = useState(initialNSpectra);
+  const [nSpectra] = useState(initialNSpectra);
   const [nElements, setNElements] = useState(initialNElements);
+  const [useDemoMode, setUseDemoMode] = useState(demoMode);
 
   // データ状態
   const [xData, setXData] = useState<number[]>([]);
@@ -111,7 +167,65 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
   const lastFrameTimeRef = useRef<number>(performance.now());
   const fpsHistoryRef = useRef<number[]>([]);
 
-  // データフェッチ関数
+  // ローカル計算関数（デモモード用）
+  const calculateLocal = useCallback((
+    paramP1: number,
+    paramP2: number,
+    paramNPoints: number,
+    paramNSpectra: number,
+    paramNElements: number
+  ) => {
+    const startTime = performance.now();
+
+    // X軸生成
+    const x: number[] = [];
+    for (let i = 0; i < paramNPoints; i++) {
+      x.push(-100 + (700 * i) / (paramNPoints - 1));
+    }
+
+    // Y軸データ生成
+    const allY: number[][] = [];
+    for (let elem = 0; elem < paramNElements; elem++) {
+      const spectrum: number[] = new Array(paramNPoints).fill(0);
+      for (let spec = 0; spec < paramNSpectra; spec++) {
+        const p1Var = paramP1 + 0.02 * (spec - paramNSpectra / 2);
+        const p2Var = paramP2 + 0.01 * (spec - paramNSpectra / 2);
+        const specData = generateSpectrum(x, p1Var, p2Var, elem);
+        for (let pt = 0; pt < paramNPoints; pt++) {
+          spectrum[pt] += specData[pt] / paramNSpectra;
+        }
+      }
+      allY.push(spectrum);
+    }
+
+    const calcTime = performance.now() - startTime;
+
+    // FPS計算
+    const now = performance.now();
+    const frameTime = now - lastFrameTimeRef.current;
+    lastFrameTimeRef.current = now;
+    fpsHistoryRef.current.push(1000 / frameTime);
+    if (fpsHistoryRef.current.length > 10) {
+      fpsHistoryRef.current.shift();
+    }
+    const avgFps = fpsHistoryRef.current.reduce((a, b) => a + b, 0) / fpsHistoryRef.current.length;
+
+    setXData(x);
+    setYData(allY);
+    setMetrics(prev => ({
+      rtt: calcTime,
+      serverCalcTime: calcTime,
+      parseTime: 0,
+      renderTime: 0,
+      totalPoints: paramNPoints * paramNSpectra * paramNElements,
+      dataSize: paramNPoints * paramNElements * 8,
+      cancelledRequests: prev.cancelledRequests,
+      successfulRequests: prev.successfulRequests + 1,
+      fps: avgFps
+    }));
+  }, []);
+
+  // データフェッチ関数（サーバーモード）
   const fetchData = useCallback(async (
     paramP1: number,
     paramP2: number,
@@ -119,6 +233,12 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     paramNSpectra: number,
     paramNElements: number
   ) => {
+    // デモモードの場合はローカル計算
+    if (useDemoMode) {
+      calculateLocal(paramP1, paramP2, paramNPoints, paramNSpectra, paramNElements);
+      return;
+    }
+
     // 前のリクエストをキャンセル
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -171,16 +291,13 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
       let idx = 0;
 
       for (let elem = 0; elem < paramNElements; elem++) {
-        // 各元素の全スペクトルを平均化（または最初のスペクトルを使用）
         const elementSpectrum: number[] = new Array(paramNPoints).fill(0);
-
         for (let spec = 0; spec < paramNSpectra; spec++) {
           for (let pt = 0; pt < paramNPoints; pt++) {
             elementSpectrum[pt] += flatY[idx + pt] / paramNSpectra;
           }
           idx += paramNPoints;
         }
-
         allY.push(elementSpectrum);
       }
 
@@ -214,14 +331,16 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
 
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
-        // キャンセルは正常動作
         return;
       }
-      setError((err as Error).message);
+      // サーバー接続失敗時は自動的にデモモードに切り替え
+      setUseDemoMode(true);
+      setError('Server unavailable - switched to Demo Mode');
+      calculateLocal(paramP1, paramP2, paramNPoints, paramNSpectra, paramNElements);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [useDemoMode, calculateLocal]);
 
   // スロットルされたフェッチ
   const throttledFetch = useMemo(
@@ -236,10 +355,15 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     throttledFetch(x, y, nPoints, nSpectra, nElements);
   }, [throttledFetch, nPoints, nSpectra, nElements]);
 
+  // 初期データ読み込み
+  useEffect(() => {
+    throttledFetch(p1, p2, nPoints, nSpectra, nElements);
+  }, []);
+
   // パラメータ変更時の再フェッチ
   useEffect(() => {
     throttledFetch(p1, p2, nPoints, nSpectra, nElements);
-  }, [nPoints, nSpectra, nElements]);
+  }, [nPoints, nSpectra, nElements, useDemoMode]);
 
   // uPlot初期化・更新
   useEffect(() => {
@@ -270,10 +394,13 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     }
     const yPadding = (yMax - yMin) * 0.1 || 0.1;
 
+    // チャートの高さを画面サイズに応じて調整
+    const chartHeight = window.innerWidth < 768 ? 250 : 400;
+
     // uPlotオプション
     const opts: uPlot.Options = {
       width: chartContainerRef.current.clientWidth,
-      height: 400,
+      height: chartHeight,
       title: '',
       cursor: {
         show: true,
@@ -298,15 +425,15 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
           stroke: '#6b7280',
           grid: { stroke: 'rgba(100, 149, 237, 0.1)' },
           ticks: { stroke: '#4b5563' },
-          font: '12px monospace',
-          labelFont: '12px monospace'
+          font: '11px monospace',
+          labelFont: '11px monospace'
         },
         {
           stroke: '#6b7280',
           grid: { stroke: 'rgba(100, 149, 237, 0.1)' },
           ticks: { stroke: '#4b5563' },
-          font: '12px monospace',
-          labelFont: '12px monospace'
+          font: '11px monospace',
+          labelFont: '11px monospace'
         }
       ],
       series
@@ -314,33 +441,26 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
 
     // 既存のプロットがあれば更新、なければ作成
     if (uplotRef.current) {
-      // シリーズ数が変わった場合は再作成
       if (uplotRef.current.series.length !== series.length) {
         uplotRef.current.destroy();
         uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
       } else {
-        // データのみ更新（高速）
         uplotRef.current.setData(plotData);
-
-        // Y軸範囲を更新
         uplotRef.current.setScale('y', { min: yMin - yPadding, max: yMax + yPadding });
       }
     } else {
       uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
     }
-
-    return () => {
-      // クリーンアップはコンポーネントアンマウント時のみ
-    };
   }, [xData, yData, nElements]);
 
   // ウィンドウリサイズ対応
   useEffect(() => {
     const handleResize = () => {
       if (uplotRef.current && chartContainerRef.current) {
+        const chartHeight = window.innerWidth < 768 ? 250 : 400;
         uplotRef.current.setSize({
           width: chartContainerRef.current.clientWidth,
-          height: 400
+          height: chartHeight
         });
       }
     };
@@ -349,7 +469,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // コンポーネントアンマウント時のクリーンアップ
+  // クリーンアップ
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -361,30 +481,34 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     };
   }, []);
 
+  // XY Padのサイズをウィンドウ幅に応じて調整
+  const xyPadSize = Math.min(280, window.innerWidth - 60);
+
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      gap: '20px',
-      padding: '20px',
+      gap: '12px',
+      padding: '12px',
       backgroundColor: '#0f0f1a',
       minHeight: '100vh',
-      color: '#e0e0e0'
+      color: '#e0e0e0',
+      boxSizing: 'border-box'
     }}>
       {/* ヘッダー */}
       <div style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '12px 20px',
+        flexDirection: 'column',
+        gap: '8px',
+        padding: '12px 16px',
         backgroundColor: 'rgba(26, 26, 46, 0.9)',
         borderRadius: '12px',
         border: '1px solid rgba(100, 149, 237, 0.3)'
       }}>
-        <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
           <h1 style={{
             margin: 0,
-            fontSize: '24px',
+            fontSize: '20px',
             fontWeight: 'bold',
             background: 'linear-gradient(135deg, #6495ed, #ff6600)',
             WebkitBackgroundClip: 'text',
@@ -392,246 +516,148 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
           }}>
             Spectrum Browser
           </h1>
-          <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#6b7280' }}>
-            Ultra-fast spectrum exploration with real-time parameter control
-          </p>
+          {/* デモモード切り替え */}
+          <button
+            onClick={() => {
+              setUseDemoMode(!useDemoMode);
+              setError(null);
+            }}
+            style={{
+              padding: '6px 12px',
+              fontSize: '11px',
+              backgroundColor: useDemoMode ? 'rgba(34, 197, 94, 0.2)' : 'rgba(100, 149, 237, 0.2)',
+              border: `1px solid ${useDemoMode ? '#22c55e' : '#6495ed'}`,
+              borderRadius: '6px',
+              color: useDemoMode ? '#22c55e' : '#6495ed',
+              cursor: 'pointer'
+            }}
+          >
+            {useDemoMode ? 'Demo Mode' : 'Server Mode'}
+          </button>
         </div>
         {error && (
           <div style={{
-            padding: '8px 16px',
-            backgroundColor: 'rgba(239, 68, 68, 0.2)',
-            border: '1px solid #ef4444',
-            borderRadius: '8px',
-            color: '#ef4444',
-            fontSize: '12px'
+            padding: '6px 12px',
+            backgroundColor: 'rgba(251, 191, 36, 0.2)',
+            border: '1px solid #fbbf24',
+            borderRadius: '6px',
+            color: '#fbbf24',
+            fontSize: '11px'
           }}>
-            Error: {error}
+            {error}
           </div>
         )}
       </div>
 
-      {/* メインコンテンツ */}
+      {/* XY Pad + チャート（モバイル: 縦並び, デスクトップ: 横並び） */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '320px 1fr 300px',
-        gap: '20px',
-        alignItems: 'start'
+        display: 'flex',
+        flexDirection: window.innerWidth < 768 ? 'column' : 'row',
+        gap: '12px'
       }}>
-        {/* 左パネル：コントローラー */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
-          {/* XY Pad */}
-          <div style={{
-            backgroundColor: 'rgba(26, 26, 46, 0.9)',
-            borderRadius: '12px',
-            padding: '16px',
-            border: '1px solid rgba(100, 149, 237, 0.3)'
-          }}>
-            <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#6495ed' }}>
-              Parameter Space
-            </h3>
-            <XYPadController
-              valueX={p1}
-              valueY={p2}
-              onChange={handleXYChange}
-              width={280}
-              height={280}
-              labelX="p1 (Shift)"
-              labelY="p2 (Width/Intensity)"
-            />
-          </div>
-
-          {/* 設定パネル */}
-          <div style={{
-            backgroundColor: 'rgba(26, 26, 46, 0.9)',
-            borderRadius: '12px',
-            padding: '16px',
-            border: '1px solid rgba(100, 149, 237, 0.3)'
-          }}>
-            <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#6495ed' }}>
-              Data Settings
-            </h3>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* ポイント数 */}
-              <div>
-                <label style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '12px',
-                  color: '#9ca3af',
-                  marginBottom: '4px'
-                }}>
-                  <span>Points/Spectrum:</span>
-                  <span style={{ color: '#22d3ee' }}>{nPoints}</span>
-                </label>
-                <input
-                  type="range"
-                  min={10}
-                  max={1000}
-                  step={10}
-                  value={nPoints}
-                  onChange={e => setNPoints(parseInt(e.target.value))}
-                  style={{ width: '100%', accentColor: '#6495ed' }}
-                />
-              </div>
-
-              {/* スペクトル数 */}
-              <div>
-                <label style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '12px',
-                  color: '#9ca3af',
-                  marginBottom: '4px'
-                }}>
-                  <span>Spectra/Element:</span>
-                  <span style={{ color: '#22d3ee' }}>{nSpectra}</span>
-                </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  value={nSpectra}
-                  onChange={e => setNSpectra(parseInt(e.target.value))}
-                  style={{ width: '100%', accentColor: '#6495ed' }}
-                />
-              </div>
-
-              {/* 元素数 */}
-              <div>
-                <label style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '12px',
-                  color: '#9ca3af',
-                  marginBottom: '4px'
-                }}>
-                  <span>Elements:</span>
-                  <span style={{ color: '#22d3ee' }}>{nElements}</span>
-                </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  value={nElements}
-                  onChange={e => setNElements(parseInt(e.target.value))}
-                  style={{ width: '100%', accentColor: '#6495ed' }}
-                />
-              </div>
-
-              {/* 合計ポイント数表示 */}
-              <div style={{
-                padding: '8px 12px',
-                backgroundColor: 'rgba(100, 149, 237, 0.1)',
-                borderRadius: '6px',
-                fontSize: '12px',
-                display: 'flex',
-                justifyContent: 'space-between'
-              }}>
-                <span style={{ color: '#6b7280' }}>Total Points:</span>
-                <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
-                  {(nPoints * nSpectra * nElements).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 中央：チャート */}
+        {/* XY Pad */}
         <div style={{
           backgroundColor: 'rgba(26, 26, 46, 0.9)',
           borderRadius: '12px',
-          padding: '20px',
-          border: '1px solid rgba(100, 149, 237, 0.3)'
+          padding: '12px',
+          border: '1px solid rgba(100, 149, 237, 0.3)',
+          flexShrink: 0
         }}>
-          <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#6495ed' }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: '#6495ed' }}>
+            Parameter Space
+          </h3>
+          <XYPadController
+            valueX={p1}
+            valueY={p2}
+            onChange={handleXYChange}
+            width={xyPadSize}
+            height={xyPadSize}
+            labelX="p1 (Shift)"
+            labelY="p2 (Width)"
+          />
+        </div>
+
+        {/* チャート */}
+        <div style={{
+          flex: 1,
+          backgroundColor: 'rgba(26, 26, 46, 0.9)',
+          borderRadius: '12px',
+          padding: '12px',
+          border: '1px solid rgba(100, 149, 237, 0.3)',
+          minWidth: 0
+        }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: '#6495ed' }}>
             Spectrum Viewer
           </h3>
           <div
             ref={chartContainerRef}
             style={{
               width: '100%',
-              minHeight: '400px',
+              minHeight: window.innerWidth < 768 ? '250px' : '400px',
               backgroundColor: '#0a0a14',
               borderRadius: '8px'
             }}
           />
-          {xData.length === 0 && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '400px',
-              color: '#6b7280',
-              fontSize: '14px'
-            }}>
-              {isLoading ? 'Loading...' : 'Move the XY Pad to fetch data'}
-            </div>
-          )}
         </div>
+      </div>
 
-        {/* 右パネル：パフォーマンスモニター */}
+      {/* 設定 + パフォーマンス */}
+      <div style={{
+        display: 'flex',
+        flexDirection: window.innerWidth < 768 ? 'column' : 'row',
+        gap: '12px'
+      }}>
+        {/* 設定パネル */}
         <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
+          flex: 1,
+          backgroundColor: 'rgba(26, 26, 46, 0.9)',
+          borderRadius: '12px',
+          padding: '12px',
+          border: '1px solid rgba(100, 149, 237, 0.3)'
         }}>
-          <PerformanceMonitor metrics={metrics} isLoading={isLoading} />
-
-          {/* 最適化情報 */}
-          <div style={{
-            backgroundColor: 'rgba(26, 26, 46, 0.9)',
-            borderRadius: '12px',
-            padding: '16px',
-            border: '1px solid rgba(100, 149, 237, 0.3)',
-            fontSize: '11px'
-          }}>
-            <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#6495ed' }}>
-              Optimization Info
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#9ca3af' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  backgroundColor: '#22c55e',
-                  borderRadius: '50%'
-                }} />
-                Throttle: {throttleMs}ms ({Math.round(1000 / throttleMs)} req/s max)
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  backgroundColor: '#22c55e',
-                  borderRadius: '50%'
-                }} />
-                AbortController: Active
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  backgroundColor: '#22c55e',
-                  borderRadius: '50%'
-                }} />
-                uPlot Canvas: 60 FPS
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  backgroundColor: '#22c55e',
-                  borderRadius: '50%'
-                }} />
-                RAF Sync: Enabled
-              </div>
+          <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: '#6495ed' }}>
+            Data Settings
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div>
+              <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9ca3af', marginBottom: '2px' }}>
+                <span>Points:</span>
+                <span style={{ color: '#22d3ee' }}>{nPoints}</span>
+              </label>
+              <input type="range" min={10} max={500} step={10} value={nPoints}
+                onChange={e => setNPoints(parseInt(e.target.value))}
+                style={{ width: '100%', accentColor: '#6495ed' }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9ca3af', marginBottom: '2px' }}>
+                <span>Elements:</span>
+                <span style={{ color: '#22d3ee' }}>{nElements}</span>
+              </label>
+              <input type="range" min={1} max={5} value={nElements}
+                onChange={e => setNElements(parseInt(e.target.value))}
+                style={{ width: '100%', accentColor: '#6495ed' }}
+              />
+            </div>
+            <div style={{
+              padding: '6px 10px',
+              backgroundColor: 'rgba(100, 149, 237, 0.1)',
+              borderRadius: '6px',
+              fontSize: '11px',
+              display: 'flex',
+              justifyContent: 'space-between'
+            }}>
+              <span style={{ color: '#6b7280' }}>Total:</span>
+              <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                {(nPoints * nSpectra * nElements).toLocaleString()} pts
+              </span>
             </div>
           </div>
+        </div>
+
+        {/* パフォーマンスモニター */}
+        <div style={{ flex: 1 }}>
+          <PerformanceMonitor metrics={metrics} isLoading={isLoading} />
         </div>
       </div>
     </div>
