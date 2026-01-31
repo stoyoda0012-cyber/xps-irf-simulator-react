@@ -442,13 +442,19 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     // 既存のプロットがあれば更新、なければ作成
     if (uplotRef.current) {
       if (uplotRef.current.series.length !== series.length) {
+        // シリーズ数が変わった場合は再作成
         uplotRef.current.destroy();
+        uplotRef.current = null;
+        // コンテナをクリア
+        chartContainerRef.current.innerHTML = '';
         uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
       } else {
         uplotRef.current.setData(plotData);
         uplotRef.current.setScale('y', { min: yMin - yPadding, max: yMax + yPadding });
       }
     } else {
+      // コンテナをクリアしてから作成
+      chartContainerRef.current.innerHTML = '';
       uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
     }
   }, [xData, yData, nElements]);
@@ -624,7 +630,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
                 <span>Points:</span>
                 <span style={{ color: '#22d3ee' }}>{nPoints}</span>
               </label>
-              <input type="range" min={10} max={500} step={10} value={nPoints}
+              <input type="range" min={50} max={2000} step={50} value={nPoints}
                 onChange={e => setNPoints(parseInt(e.target.value))}
                 style={{ width: '100%', accentColor: '#6495ed' }}
               />
@@ -634,7 +640,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
                 <span>Elements:</span>
                 <span style={{ color: '#22d3ee' }}>{nElements}</span>
               </label>
-              <input type="range" min={1} max={5} value={nElements}
+              <input type="range" min={1} max={10} value={nElements}
                 onChange={e => setNElements(parseInt(e.target.value))}
                 style={{ width: '100%', accentColor: '#6495ed' }}
               />
