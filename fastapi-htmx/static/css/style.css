@@ -240,10 +240,23 @@ input[type="range"]::-webkit-slider-thumb:active {
     padding: 0.5rem;
     height: 280px;
     position: relative;
+    overflow: hidden;
+}
+
+.chart-container canvas {
+    max-width: 100% !important;
+    max-height: 260px !important;
+    width: 100% !important;
+    height: 260px !important;
 }
 
 .heatmap-container {
     height: 300px;
+}
+
+.heatmap-container canvas {
+    max-height: 280px !important;
+    height: 280px !important;
 }
 
 /* Footer */
