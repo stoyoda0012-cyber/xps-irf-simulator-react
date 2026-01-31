@@ -159,6 +159,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
   // uPlot参照
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const uplotRef = useRef<uPlot | null>(null);
+  const prevSeriesCountRef = useRef<number>(0);
 
   // AbortController参照
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -442,29 +443,34 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
       series
     };
 
-    // シリーズ数が変わったかチェック
-    const currentSeriesCount = uplotRef.current?.series.length ?? 0;
-    const needsRecreate = currentSeriesCount !== series.length;
+    // シリーズ数が変わったかチェック（+1はx軸用）
+    const newSeriesCount = actualElements + 1;
+    const needsRecreate = prevSeriesCountRef.current !== newSeriesCount;
 
-    if (needsRecreate) {
-      // シリーズ数が変わった場合は完全に再作成
+    // 常に古いuPlotを破棄してから新しいものを作成（シリーズ数変更時）
+    if (needsRecreate || !uplotRef.current) {
+      // 既存のuPlotを破棄
       if (uplotRef.current) {
-        uplotRef.current.destroy();
+        try {
+          uplotRef.current.destroy();
+        } catch {
+          // destroy失敗は無視
+        }
         uplotRef.current = null;
       }
+
       // コンテナを完全にクリア
-      while (chartContainerRef.current.firstChild) {
-        chartContainerRef.current.removeChild(chartContainerRef.current.firstChild);
+      if (chartContainerRef.current) {
+        chartContainerRef.current.innerHTML = '';
       }
+
       // 新しいuPlotを作成
       uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
-    } else if (uplotRef.current) {
+      prevSeriesCountRef.current = newSeriesCount;
+    } else {
       // シリーズ数が同じ場合はデータのみ更新（高速）
       uplotRef.current.setData(plotData);
       uplotRef.current.setScale('y', { min: yMin - yPadding, max: yMax + yPadding });
-    } else {
-      // 初回作成
-      uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
     }
   }, [xData, yData]);
 
