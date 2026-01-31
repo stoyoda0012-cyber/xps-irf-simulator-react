@@ -367,12 +367,15 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
 
   // uPlot初期化・更新
   useEffect(() => {
-    if (!chartContainerRef.current || xData.length === 0) return;
+    if (!chartContainerRef.current || xData.length === 0 || yData.length === 0) return;
+
+    // yDataの実際の長さに基づいてシリーズを定義（nElementsとの不一致を防ぐ）
+    const actualElements = yData.length;
 
     // シリーズ定義
     const series: uPlot.Series[] = [
       { label: 'Energy (eV)' },
-      ...Array.from({ length: nElements }, (_, i) => ({
+      ...Array.from({ length: actualElements }, (_, i) => ({
         label: `Element ${i + 1}`,
         stroke: ELEMENT_COLORS[i % ELEMENT_COLORS.length],
         width: 2,
@@ -439,25 +442,31 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
       series
     };
 
-    // 既存のプロットがあれば更新、なければ作成
-    if (uplotRef.current) {
-      if (uplotRef.current.series.length !== series.length) {
-        // シリーズ数が変わった場合は再作成
+    // シリーズ数が変わったかチェック
+    const currentSeriesCount = uplotRef.current?.series.length ?? 0;
+    const needsRecreate = currentSeriesCount !== series.length;
+
+    if (needsRecreate) {
+      // シリーズ数が変わった場合は完全に再作成
+      if (uplotRef.current) {
         uplotRef.current.destroy();
         uplotRef.current = null;
-        // コンテナをクリア
-        chartContainerRef.current.innerHTML = '';
-        uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
-      } else {
-        uplotRef.current.setData(plotData);
-        uplotRef.current.setScale('y', { min: yMin - yPadding, max: yMax + yPadding });
       }
+      // コンテナを完全にクリア
+      while (chartContainerRef.current.firstChild) {
+        chartContainerRef.current.removeChild(chartContainerRef.current.firstChild);
+      }
+      // 新しいuPlotを作成
+      uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
+    } else if (uplotRef.current) {
+      // シリーズ数が同じ場合はデータのみ更新（高速）
+      uplotRef.current.setData(plotData);
+      uplotRef.current.setScale('y', { min: yMin - yPadding, max: yMax + yPadding });
     } else {
-      // コンテナをクリアしてから作成
-      chartContainerRef.current.innerHTML = '';
+      // 初回作成
       uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
     }
-  }, [xData, yData, nElements]);
+  }, [xData, yData]);
 
   // ウィンドウリサイズ対応
   useEffect(() => {
