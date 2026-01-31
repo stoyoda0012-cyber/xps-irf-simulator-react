@@ -42,10 +42,24 @@
 
 <!-- Trigger chart update after htmx swap -->
 <script>
-    // Parse chart data and update charts
-    const chartDataEl = document.getElementById('chart-data');
-    if (chartDataEl) {
-        const data = JSON.parse(chartDataEl.textContent);
-        updateCharts(data);
-    }
+    (function() {
+        // Reset global chart instances (old canvases are gone)
+        if (typeof spectrumChart !== 'undefined' && spectrumChart) {
+            try { spectrumChart.destroy(); } catch(e) {}
+            spectrumChart = null;
+        }
+        if (typeof irfChart !== 'undefined' && irfChart) {
+            try { irfChart.destroy(); } catch(e) {}
+            irfChart = null;
+        }
+
+        // Parse chart data and create new charts
+        const chartDataEl = document.getElementById('chart-data');
+        if (chartDataEl) {
+            const data = JSON.parse(chartDataEl.textContent);
+            createSpectrumChart(data);
+            createIRFChart(data);
+            createHeatmaps();
+        }
+    })();
 </script>

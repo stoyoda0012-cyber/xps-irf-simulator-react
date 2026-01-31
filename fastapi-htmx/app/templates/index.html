@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XPS IRF Simulator</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2">
     <!-- htmx for reactive updates -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <!-- Chart.js for visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Our chart code - loaded early so functions are available -->
+    <script src="/static/js/charts.js?v=2"></script>
 </head>
 <body>
     <header>
@@ -196,7 +198,5 @@
     <footer>
         <p>FastAPI + htmx version | Real-time XPS simulation with Python backend</p>
     </footer>
-
-    <script src="/static/js/charts.js"></script>
 </body>
 </html>
