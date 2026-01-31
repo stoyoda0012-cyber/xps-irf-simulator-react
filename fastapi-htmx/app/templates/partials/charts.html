@@ -1,0 +1,51 @@
+<!-- Charts partial - updated via htmx -->
+<div class="chart-panel">
+    <h3>Observed Spectrum</h3>
+    <div class="chart-container">
+        <canvas id="spectrum-chart"></canvas>
+    </div>
+</div>
+
+<div class="chart-panel">
+    <h3>Instrumental Response Function (IRF)</h3>
+    <div class="chart-container">
+        <canvas id="irf-chart"></canvas>
+    </div>
+</div>
+
+<div class="chart-panel">
+    <h3>X-ray Spot Profile</h3>
+    <div class="chart-container heatmap-container">
+        <canvas id="spot-heatmap"></canvas>
+    </div>
+</div>
+
+<div class="chart-panel">
+    <h3>2D Detector Image</h3>
+    <div class="chart-container heatmap-container">
+        <canvas id="detector-heatmap"></canvas>
+    </div>
+</div>
+
+<!-- Resolution update -->
+<script>
+    // Update resolution summary
+    document.getElementById('res_source').textContent = '{{ params.sigma_source }} meV';
+    document.getElementById('res_detector').textContent = '{{ params.sigma_detector }} meV';
+    document.getElementById('res_combined').textContent = '{{ "%.1f"|format(result.sigma_combined) }} meV';
+</script>
+
+<!-- Chart data embedded as JSON -->
+<script id="chart-data" type="application/json">
+{{ chart_data | tojson | safe }}
+</script>
+
+<!-- Trigger chart update after htmx swap -->
+<script>
+    // Parse chart data and update charts
+    const chartDataEl = document.getElementById('chart-data');
+    if (chartDataEl) {
+        const data = JSON.parse(chartDataEl.textContent);
+        updateCharts(data);
+    }
+</script>

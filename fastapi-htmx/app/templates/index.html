@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XPS IRF Simulator</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- htmx for reactive updates -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="title-section">
+                <h1>XPS IRF Simulator</h1>
+                <p class="subtitle">Instrumental Response Function Explorer</p>
+            </div>
+            <nav class="header-nav">
+                <a href="#" class="nav-link">Concept</a>
+                <a href="#" class="nav-link">Manual</a>
+                <div class="lang-toggle">
+                    <button class="lang-btn active">EN</button>
+                    <button class="lang-btn">日本語</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <aside class="sidebar">
+            <form id="params-form"
+                  hx-post="/simulate"
+                  hx-target="#charts-container"
+                  hx-trigger="input delay:100ms from:input[type='range']"
+                  hx-swap="innerHTML">
+
+                <!-- X-ray Source Section -->
+                <section class="param-section">
+                    <h3>X-ray Source</h3>
+
+                    <div class="slider-group">
+                        <label for="sigma_source">
+                            <span>Source Resolution (σ<sub>src</sub>)</span>
+                            <span class="value" id="sigma_source_val">{{ params.sigma_source }} meV</span>
+                        </label>
+                        <input type="range" id="sigma_source" name="sigma_source"
+                               min="1" max="100" step="1" value="{{ params.sigma_source }}"
+                               oninput="document.getElementById('sigma_source_val').textContent = this.value + ' meV'">
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="sigma_spot">
+                            <span>Spot Width (σ<sub>Y</sub>)</span>
+                            <span class="value" id="sigma_spot_val">{{ params.sigma_spot }} mm</span>
+                        </label>
+                        <input type="range" id="sigma_spot" name="sigma_spot"
+                               min="0.1" max="10" step="0.1" value="{{ params.sigma_spot }}"
+                               oninput="document.getElementById('sigma_spot_val').textContent = this.value + ' mm'">
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="gamma_energy">
+                            <span>Energy Skew (γ<sub>E</sub>)</span>
+                            <span class="value" id="gamma_energy_val">{{ params.gamma_energy }}</span>
+                        </label>
+                        <input type="range" id="gamma_energy" name="gamma_energy"
+                               min="-5" max="5" step="0.1" value="{{ params.gamma_energy }}"
+                               oninput="document.getElementById('gamma_energy_val').textContent = this.value">
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="gamma_spatial">
+                            <span>Spatial Skew (γ<sub>Y</sub>)</span>
+                            <span class="value" id="gamma_spatial_val">{{ params.gamma_spatial }}</span>
+                        </label>
+                        <input type="range" id="gamma_spatial" name="gamma_spatial"
+                               min="-10" max="10" step="0.1" value="{{ params.gamma_spatial }}"
+                               oninput="document.getElementById('gamma_spatial_val').textContent = this.value">
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="alpha">
+                            <span>Energy Gradient (α)</span>
+                            <span class="value" id="alpha_val">{{ params.alpha }} eV/mm</span>
+                        </label>
+                        <input type="range" id="alpha" name="alpha"
+                               min="-0.01" max="0.01" step="0.0001" value="{{ params.alpha }}"
+                               oninput="document.getElementById('alpha_val').textContent = parseFloat(this.value).toFixed(4) + ' eV/mm'">
+                    </div>
+                </section>
+
+                <!-- Detector Section -->
+                <section class="param-section">
+                    <h3>Detector</h3>
+
+                    <div class="slider-group">
+                        <label for="kappa">
+                            <span>Smile Curvature (κ)</span>
+                            <span class="value" id="kappa_val">{{ params.kappa }}</span>
+                        </label>
+                        <input type="range" id="kappa" name="kappa"
+                               min="0" max="0.1" step="0.001" value="{{ params.kappa }}"
+                               oninput="document.getElementById('kappa_val').textContent = parseFloat(this.value).toFixed(3)">
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="theta">
+                            <span>Detector Tilt (θ)</span>
+                            <span class="value" id="theta_val">{{ params.theta }}°</span>
+                        </label>
+                        <input type="range" id="theta" name="theta"
+                               min="-0.5" max="0.5" step="0.01" value="{{ params.theta }}"
+                               oninput="document.getElementById('theta_val').textContent = this.value + '°'">
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="sigma_detector">
+                            <span>Detector Resolution (σ<sub>det</sub>)</span>
+                            <span class="value" id="sigma_detector_val">{{ params.sigma_detector }} meV</span>
+                        </label>
+                        <input type="range" id="sigma_detector" name="sigma_detector"
+                               min="1" max="50" step="1" value="{{ params.sigma_detector }}"
+                               oninput="document.getElementById('sigma_detector_val').textContent = this.value + ' meV'">
+                    </div>
+                </section>
+
+                <!-- Noise Section -->
+                <section class="param-section">
+                    <h3>Detector Noise</h3>
+
+                    <div class="slider-group">
+                        <label for="poisson_noise">
+                            <span>Poisson Noise</span>
+                            <span class="value" id="poisson_noise_val">10<sup>{{ params.poisson_noise }}</sup></span>
+                        </label>
+                        <input type="range" id="poisson_noise" name="poisson_noise"
+                               min="1" max="8" step="0.1" value="{{ params.poisson_noise }}"
+                               oninput="document.getElementById('poisson_noise_val').innerHTML = '10<sup>' + this.value + '</sup>'">
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="gaussian_noise">
+                            <span>Gaussian Noise</span>
+                            <span class="value" id="gaussian_noise_val">{{ params.gaussian_noise }}%</span>
+                        </label>
+                        <input type="range" id="gaussian_noise" name="gaussian_noise"
+                               min="0" max="10" step="0.1" value="{{ params.gaussian_noise }}"
+                               oninput="document.getElementById('gaussian_noise_val').textContent = this.value + '%'">
+                    </div>
+                </section>
+
+                <!-- Measurement Section -->
+                <section class="param-section">
+                    <h3>Measurement</h3>
+
+                    <div class="slider-group">
+                        <label for="temperature">
+                            <span>Temperature (T)</span>
+                            <span class="value" id="temperature_val">{{ params.temperature }} K</span>
+                        </label>
+                        <input type="range" id="temperature" name="temperature"
+                               min="4" max="500" step="1" value="{{ params.temperature }}"
+                               oninput="document.getElementById('temperature_val').textContent = this.value + ' K'">
+                    </div>
+                </section>
+
+                <!-- Resolution Summary -->
+                <section class="param-section resolution-summary">
+                    <h3>Resolution Summary</h3>
+                    <div class="resolution-info">
+                        <div class="resolution-item">
+                            <span>σ<sub>source</sub></span>
+                            <span id="res_source">{{ params.sigma_source }} meV</span>
+                        </div>
+                        <div class="resolution-item">
+                            <span>σ<sub>detector</sub></span>
+                            <span id="res_detector">{{ params.sigma_detector }} meV</span>
+                        </div>
+                        <div class="resolution-item highlight">
+                            <span>σ<sub>combined</sub></span>
+                            <span id="res_combined">{{ "%.1f"|format(result.sigma_combined) }} meV</span>
+                        </div>
+                    </div>
+                    <p class="formula">σ<sub>combined</sub> = √(σ<sub>src</sub>² + σ<sub>det</sub>²)</p>
+                </section>
+            </form>
+        </aside>
+
+        <div id="charts-container" class="charts-grid">
+            {% include "partials/charts.html" %}
+        </div>
+    </main>
+
+    <footer>
+        <p>FastAPI + htmx version | Real-time XPS simulation with Python backend</p>
+    </footer>
+
+    <script src="/static/js/charts.js"></script>
+</body>
+</html>
