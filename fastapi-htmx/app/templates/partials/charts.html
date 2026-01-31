@@ -1,0 +1,33 @@
+<!-- Charts partial -->
+<div class="chart-panel">
+    <h3>Observed Spectrum</h3>
+    <div class="chart-container">
+        <canvas id="spectrum-chart"></canvas>
+    </div>
+</div>
+
+<div class="chart-panel">
+    <h3>Instrumental Response Function (IRF)</h3>
+    <div class="chart-container">
+        <canvas id="irf-chart"></canvas>
+    </div>
+</div>
+
+<div class="chart-panel">
+    <h3>X-ray Spot Profile</h3>
+    <div class="chart-container heatmap-container">
+        <canvas id="spot-heatmap"></canvas>
+    </div>
+</div>
+
+<div class="chart-panel">
+    <h3>2D Detector Image</h3>
+    <div class="chart-container heatmap-container">
+        <canvas id="detector-heatmap"></canvas>
+    </div>
+</div>
+
+<!-- Chart data embedded as JSON for initial render -->
+<script id="chart-data" type="application/json">
+{{ chart_data | tojson | safe }}
+</script>
