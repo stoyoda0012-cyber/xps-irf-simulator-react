@@ -136,6 +136,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
   const [nSpectra] = useState(initialNSpectra);
   const [nElements, setNElements] = useState(initialNElements);
   const [useDemoMode, setUseDemoMode] = useState(demoMode);
+  const [nCharts, setNCharts] = useState(1); // チャート数
 
   // データ状態
   const [xData, setXData] = useState<number[]>([]);
@@ -156,9 +157,9 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     fps: 0
   });
 
-  // uPlot参照
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const uplotRef = useRef<uPlot | null>(null);
+  // uPlot参照（複数チャート対応）
+  const chartContainerRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const uplotRefs = useRef<(uPlot | null)[]>([]);
   const prevSeriesCountRef = useRef<number>(0);
 
   // AbortController参照
@@ -366,11 +367,13 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     throttledFetch(p1, p2, nPoints, nSpectra, nElements);
   }, [nPoints, nSpectra, nElements, useDemoMode]);
 
-  // uPlot初期化・更新
+  // uPlot初期化・更新（複数チャート対応）
   useEffect(() => {
-    if (!chartContainerRef.current || xData.length === 0 || yData.length === 0) return;
+    if (xData.length === 0 || yData.length === 0) return;
 
-    // yDataの実際の長さに基づいてシリーズを定義（nElementsとの不一致を防ぐ）
+    const renderStart = performance.now();
+
+    // yDataの実際の長さに基づいてシリーズを定義
     const actualElements = yData.length;
 
     // シリーズ定義
@@ -398,107 +401,93 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     }
     const yPadding = (yMax - yMin) * 0.1 || 0.1;
 
-    // チャートの高さを画面サイズに応じて調整
-    const chartHeight = window.innerWidth < 768 ? 250 : 400;
+    // チャートの高さを画面サイズとチャート数に応じて調整
+    const baseHeight = window.innerWidth < 768 ? 200 : 300;
+    const chartHeight = nCharts > 2 ? Math.max(150, baseHeight / Math.ceil(nCharts / 2)) : baseHeight;
 
-    // uPlotオプション
-    const opts: uPlot.Options = {
-      width: chartContainerRef.current.clientWidth,
-      height: chartHeight,
-      title: '',
-      cursor: {
-        show: true,
-        drag: { x: false, y: false }
-      },
-      legend: {
-        show: true,
-        live: true
-      },
-      scales: {
-        x: {
-          time: false,
-          auto: true
-        },
-        y: {
-          auto: false,
-          range: [yMin - yPadding, yMax + yPadding]
-        }
-      },
-      axes: [
-        {
-          stroke: '#6b7280',
-          grid: { stroke: 'rgba(100, 149, 237, 0.1)' },
-          ticks: { stroke: '#4b5563' },
-          font: '11px monospace',
-          labelFont: '11px monospace'
-        },
-        {
-          stroke: '#6b7280',
-          grid: { stroke: 'rgba(100, 149, 237, 0.1)' },
-          ticks: { stroke: '#4b5563' },
-          font: '11px monospace',
-          labelFont: '11px monospace'
-        }
-      ],
-      series
-    };
-
-    // シリーズ数が変わったかチェック（+1はx軸用）
+    // シリーズ数が変わったかチェック
     const newSeriesCount = actualElements + 1;
     const needsRecreate = prevSeriesCountRef.current !== newSeriesCount;
 
-    // 常に古いuPlotを破棄してから新しいものを作成（シリーズ数変更時）
-    if (needsRecreate || !uplotRef.current) {
-      // 既存のuPlotを破棄
-      if (uplotRef.current) {
-        try {
-          uplotRef.current.destroy();
-        } catch {
-          // destroy失敗は無視
+    // 各チャートを更新
+    for (let i = 0; i < nCharts; i++) {
+      const container = chartContainerRefs.current[i];
+      if (!container) continue;
+
+      const opts: uPlot.Options = {
+        width: container.clientWidth,
+        height: chartHeight,
+        title: nCharts > 1 ? `Chart ${i + 1}` : '',
+        cursor: { show: true, drag: { x: false, y: false } },
+        legend: { show: nCharts <= 2, live: true },
+        scales: {
+          x: { time: false, auto: true },
+          y: { auto: false, range: [yMin - yPadding, yMax + yPadding] }
+        },
+        axes: [
+          { stroke: '#6b7280', grid: { stroke: 'rgba(100, 149, 237, 0.1)' }, ticks: { stroke: '#4b5563' }, font: '10px monospace' },
+          { stroke: '#6b7280', grid: { stroke: 'rgba(100, 149, 237, 0.1)' }, ticks: { stroke: '#4b5563' }, font: '10px monospace' }
+        ],
+        series
+      };
+
+      if (needsRecreate || !uplotRefs.current[i]) {
+        // 既存のuPlotを破棄
+        if (uplotRefs.current[i]) {
+          try { uplotRefs.current[i]!.destroy(); } catch { /* ignore */ }
         }
-        uplotRef.current = null;
+        container.innerHTML = '';
+        uplotRefs.current[i] = new uPlot(opts, plotData, container);
+      } else {
+        uplotRefs.current[i]!.setData(plotData);
+        uplotRefs.current[i]!.setScale('y', { min: yMin - yPadding, max: yMax + yPadding });
       }
-
-      // コンテナを完全にクリア
-      if (chartContainerRef.current) {
-        chartContainerRef.current.innerHTML = '';
-      }
-
-      // 新しいuPlotを作成
-      uplotRef.current = new uPlot(opts, plotData, chartContainerRef.current);
-      prevSeriesCountRef.current = newSeriesCount;
-    } else {
-      // シリーズ数が同じ場合はデータのみ更新（高速）
-      uplotRef.current.setData(plotData);
-      uplotRef.current.setScale('y', { min: yMin - yPadding, max: yMax + yPadding });
     }
-  }, [xData, yData]);
 
-  // ウィンドウリサイズ対応
+    // 余分なチャートを削除
+    for (let i = nCharts; i < uplotRefs.current.length; i++) {
+      if (uplotRefs.current[i]) {
+        try { uplotRefs.current[i]!.destroy(); } catch { /* ignore */ }
+        uplotRefs.current[i] = null;
+      }
+    }
+
+    prevSeriesCountRef.current = newSeriesCount;
+
+    // 描画時間を計測
+    const renderTime = performance.now() - renderStart;
+    setMetrics(prev => ({ ...prev, renderTime }));
+  }, [xData, yData, nCharts]);
+
+  // ウィンドウリサイズ対応（複数チャート）
   useEffect(() => {
     const handleResize = () => {
-      if (uplotRef.current && chartContainerRef.current) {
-        const chartHeight = window.innerWidth < 768 ? 250 : 400;
-        uplotRef.current.setSize({
-          width: chartContainerRef.current.clientWidth,
-          height: chartHeight
-        });
-      }
+      const baseHeight = window.innerWidth < 768 ? 200 : 300;
+      const chartHeight = nCharts > 2 ? Math.max(150, baseHeight / Math.ceil(nCharts / 2)) : baseHeight;
+
+      uplotRefs.current.forEach((uplot, i) => {
+        const container = chartContainerRefs.current[i];
+        if (uplot && container) {
+          uplot.setSize({ width: container.clientWidth, height: chartHeight });
+        }
+      });
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [nCharts]);
 
-  // クリーンアップ
+  // クリーンアップ（複数チャート）
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      if (uplotRef.current) {
-        uplotRef.current.destroy();
-      }
+      uplotRefs.current.forEach(uplot => {
+        if (uplot) {
+          try { uplot.destroy(); } catch { /* ignore */ }
+        }
+      });
     };
   }, []);
 
@@ -598,7 +587,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
           />
         </div>
 
-        {/* チャート */}
+        {/* チャート（複数対応） */}
         <div style={{
           flex: 1,
           backgroundColor: 'rgba(26, 26, 46, 0.9)',
@@ -608,17 +597,26 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
           minWidth: 0
         }}>
           <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: '#6495ed' }}>
-            Spectrum Viewer
+            Spectrum Viewer {nCharts > 1 ? `(×${nCharts})` : ''}
           </h3>
-          <div
-            ref={chartContainerRef}
-            style={{
-              width: '100%',
-              minHeight: window.innerWidth < 768 ? '250px' : '400px',
-              backgroundColor: '#0a0a14',
-              borderRadius: '8px'
-            }}
-          />
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: nCharts > 2 ? 'repeat(2, 1fr)' : '1fr',
+            gap: '8px'
+          }}>
+            {Array.from({ length: nCharts }, (_, i) => (
+              <div
+                key={i}
+                ref={el => { chartContainerRefs.current[i] = el; }}
+                style={{
+                  width: '100%',
+                  minHeight: nCharts > 2 ? '150px' : (window.innerWidth < 768 ? '200px' : '300px'),
+                  backgroundColor: '#0a0a14',
+                  borderRadius: '8px'
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -658,6 +656,16 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
               <input type="range" min={1} max={20} value={nElements}
                 onChange={e => setNElements(parseInt(e.target.value))}
                 style={{ width: '100%', accentColor: '#6495ed' }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9ca3af', marginBottom: '2px' }}>
+                <span>Charts:</span>
+                <span style={{ color: '#f472b6' }}>{nCharts}</span>
+              </label>
+              <input type="range" min={1} max={6} value={nCharts}
+                onChange={e => setNCharts(parseInt(e.target.value))}
+                style={{ width: '100%', accentColor: '#f472b6' }}
               />
             </div>
             <div style={{
