@@ -1,5 +1,6 @@
 /**
  * XPS IRF Simulator - Chart rendering with Chart.js
+ * Using JSON API instead of htmx for chart updates
  */
 
 // Chart instances
@@ -20,11 +21,68 @@ const colors = {
 Chart.defaults.color = colors.text;
 Chart.defaults.borderColor = colors.grid;
 
+// Debounce timer
+let updateTimer = null;
+
 /**
  * Convert parallel arrays to {x, y} point array
  */
 function toPointArray(xArr, yArr) {
     return xArr.map((x, i) => ({ x: x, y: yArr[i] }));
+}
+
+/**
+ * Get current parameters from form
+ */
+function getParams() {
+    return {
+        sigma_source: parseFloat(document.getElementById('sigma_source').value),
+        sigma_spot: parseFloat(document.getElementById('sigma_spot').value),
+        gamma_energy: parseFloat(document.getElementById('gamma_energy').value),
+        gamma_spatial: parseFloat(document.getElementById('gamma_spatial').value),
+        alpha: parseFloat(document.getElementById('alpha').value),
+        kappa: parseFloat(document.getElementById('kappa').value),
+        theta: parseFloat(document.getElementById('theta').value),
+        sigma_detector: parseFloat(document.getElementById('sigma_detector').value),
+        temperature: parseFloat(document.getElementById('temperature').value),
+        poisson_noise: parseFloat(document.getElementById('poisson_noise').value),
+        gaussian_noise: parseFloat(document.getElementById('gaussian_noise').value),
+    };
+}
+
+/**
+ * Fetch simulation data from API and update charts
+ */
+async function fetchAndUpdateCharts() {
+    const params = getParams();
+    const queryString = new URLSearchParams(params).toString();
+
+    try {
+        const response = await fetch(`/api/simulate?${queryString}`);
+        const data = await response.json();
+
+        // Update charts
+        updateSpectrumChart(data);
+        updateIRFChart(data);
+
+        // Update resolution summary
+        document.getElementById('res_source').textContent = params.sigma_source + ' meV';
+        document.getElementById('res_detector').textContent = params.sigma_detector + ' meV';
+        document.getElementById('res_combined').textContent = data.sigma_combined.toFixed(1) + ' meV';
+
+    } catch (error) {
+        console.error('Error fetching simulation:', error);
+    }
+}
+
+/**
+ * Debounced update - wait 50ms after last input
+ */
+function scheduleUpdate() {
+    if (updateTimer) {
+        clearTimeout(updateTimer);
+    }
+    updateTimer = setTimeout(fetchAndUpdateCharts, 50);
 }
 
 /**
@@ -38,27 +96,22 @@ function initCharts() {
         createIRFChart(data);
         createHeatmaps();
     }
+
+    // Setup slider event listeners
+    setupSliderListeners();
 }
 
 /**
- * Update all charts with new data (called after htmx swap)
+ * Setup event listeners for all sliders
  */
-function updateCharts(data) {
-    // After htmx swap, canvas elements are new - must recreate charts
-    // Destroy old instances first
-    if (spectrumChart) {
-        spectrumChart.destroy();
-        spectrumChart = null;
+function setupSliderListeners() {
+    const form = document.getElementById('params-form');
+    if (form) {
+        const sliders = form.querySelectorAll('input[type="range"]');
+        sliders.forEach(slider => {
+            slider.addEventListener('input', scheduleUpdate);
+        });
     }
-    if (irfChart) {
-        irfChart.destroy();
-        irfChart = null;
-    }
-
-    // Create new charts with new canvas elements
-    createSpectrumChart(data);
-    createIRFChart(data);
-    createHeatmaps();
 }
 
 /**
@@ -67,11 +120,6 @@ function updateCharts(data) {
 function createSpectrumChart(data) {
     const ctx = document.getElementById('spectrum-chart');
     if (!ctx) return;
-
-    // Destroy existing chart
-    if (spectrumChart) {
-        spectrumChart.destroy();
-    }
 
     spectrumChart = new Chart(ctx, {
         type: 'line',
@@ -111,7 +159,7 @@ function createSpectrumChart(data) {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: 0, // Disable animation for real-time updates
+                duration: 0,
             },
             interaction: {
                 intersect: false,
@@ -177,7 +225,7 @@ function updateSpectrumChart(data) {
     spectrumChart.data.datasets[0].data = toPointArray(data.energy, data.spectrum);
     spectrumChart.data.datasets[1].data = toPointArray(data.energy, data.spectrum_clean);
     spectrumChart.data.datasets[2].data = toPointArray(data.energy, data.ideal_fd);
-    spectrumChart.update('none'); // Update without animation
+    spectrumChart.update('none');
 }
 
 /**
@@ -186,11 +234,6 @@ function updateSpectrumChart(data) {
 function createIRFChart(data) {
     const ctx = document.getElementById('irf-chart');
     if (!ctx) return;
-
-    // Destroy existing chart
-    if (irfChart) {
-        irfChart.destroy();
-    }
 
     irfChart = new Chart(ctx, {
         type: 'line',
@@ -269,17 +312,14 @@ function updateIRFChart(data) {
 }
 
 /**
- * Create placeholder heatmaps
- * (Full implementation would use 2D data from server)
+ * Create heatmaps
  */
 function createHeatmaps() {
-    // Spot profile heatmap
     const spotCanvas = document.getElementById('spot-heatmap');
     if (spotCanvas) {
         drawPlaceholderHeatmap(spotCanvas, 'hot');
     }
 
-    // Detector image heatmap
     const detectorCanvas = document.getElementById('detector-heatmap');
     if (detectorCanvas) {
         drawPlaceholderHeatmap(detectorCanvas, 'viridis');
@@ -294,7 +334,6 @@ function drawPlaceholderHeatmap(canvas, colormap) {
     const width = canvas.width = canvas.parentElement.clientWidth - 16;
     const height = canvas.height = canvas.parentElement.clientHeight - 16;
 
-    // Generate placeholder 2D Gaussian
     const centerX = width / 2;
     const centerY = height / 2;
     const sigmaX = width / 4;
@@ -319,7 +358,6 @@ function drawPlaceholderHeatmap(canvas, colormap) {
 
     ctx.putImageData(imageData, 0, 0);
 
-    // Add axis labels
     ctx.fillStyle = colors.text;
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
@@ -339,7 +377,6 @@ function getColorFromValue(value, colormap) {
     value = Math.max(0, Math.min(1, value));
 
     if (colormap === 'hot') {
-        // Hot colormap: black -> red -> yellow -> white
         if (value < 0.33) {
             const t = value / 0.33;
             return [Math.floor(255 * t), 0, 0];
@@ -351,7 +388,6 @@ function getColorFromValue(value, colormap) {
             return [255, 255, Math.floor(255 * t)];
         }
     } else {
-        // Viridis-like colormap
         const r = Math.floor(68 + value * (253 - 68));
         const g = Math.floor(1 + value * (231 - 1));
         const b = Math.floor(84 + value * (37 - 84));
@@ -361,10 +397,3 @@ function getColorFromValue(value, colormap) {
 
 // Initialize charts when DOM is ready
 document.addEventListener('DOMContentLoaded', initCharts);
-
-// Reinitialize charts after htmx swaps content
-document.body.addEventListener('htmx:afterSwap', function(event) {
-    if (event.detail.target.id === 'charts-container') {
-        // Charts are reinitialized via inline script in partial
-    }
-});

@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XPS IRF Simulator</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=2">
-    <!-- htmx for reactive updates -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=3">
     <!-- Chart.js for visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Our chart code - loaded early so functions are available -->
-    <script src="/static/js/charts.js?v=2"></script>
+    <!-- Our chart code -->
+    <script src="/static/js/charts.js?v=3"></script>
 </head>
 <body>
     <header>
@@ -32,11 +30,7 @@
 
     <main class="container">
         <aside class="sidebar">
-            <form id="params-form"
-                  hx-post="/simulate"
-                  hx-target="#charts-container"
-                  hx-trigger="input delay:100ms from:input[type='range']"
-                  hx-swap="innerHTML">
+            <form id="params-form">
 
                 <!-- X-ray Source Section -->
                 <section class="param-section">

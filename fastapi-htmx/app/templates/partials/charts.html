@@ -1,4 +1,4 @@
-<!-- Charts partial - updated via htmx -->
+<!-- Charts partial -->
 <div class="chart-panel">
     <h3>Observed Spectrum</h3>
     <div class="chart-container">
@@ -27,39 +27,7 @@
     </div>
 </div>
 
-<!-- Resolution update -->
-<script>
-    // Update resolution summary
-    document.getElementById('res_source').textContent = '{{ params.sigma_source }} meV';
-    document.getElementById('res_detector').textContent = '{{ params.sigma_detector }} meV';
-    document.getElementById('res_combined').textContent = '{{ "%.1f"|format(result.sigma_combined) }} meV';
-</script>
-
-<!-- Chart data embedded as JSON -->
+<!-- Chart data embedded as JSON for initial render -->
 <script id="chart-data" type="application/json">
 {{ chart_data | tojson | safe }}
-</script>
-
-<!-- Trigger chart update after htmx swap -->
-<script>
-    (function() {
-        // Reset global chart instances (old canvases are gone)
-        if (typeof spectrumChart !== 'undefined' && spectrumChart) {
-            try { spectrumChart.destroy(); } catch(e) {}
-            spectrumChart = null;
-        }
-        if (typeof irfChart !== 'undefined' && irfChart) {
-            try { irfChart.destroy(); } catch(e) {}
-            irfChart = null;
-        }
-
-        // Parse chart data and create new charts
-        const chartDataEl = document.getElementById('chart-data');
-        if (chartDataEl) {
-            const data = JSON.parse(chartDataEl.textContent);
-            createSpectrumChart(data);
-            createIRFChart(data);
-            createHeatmaps();
-        }
-    })();
 </script>
