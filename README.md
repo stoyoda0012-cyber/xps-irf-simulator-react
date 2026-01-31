@@ -168,6 +168,61 @@ Satoshi Toyoda
 
 MIT License
 
+---
+
+## Spectrum Browser (New!)
+
+An ultra-fast spectrum browsing interface for real-time parameter exploration.
+
+### Features
+
+- **XY Pad Controller**: 2D parameter space exploration via mouse/touch
+- **60 FPS Rendering**: Canvas-based uPlot charts
+- **Request Optimization**: Throttling + AbortController for smooth interaction
+- **Performance Monitor**: Real-time RTT, throughput, and optimization stats
+
+### Architecture
+
+```
+┌─────────────────┐     HTTP/JSON      ┌─────────────────┐
+│  React Frontend │◄──────────────────►│  FastAPI Backend │
+│                 │                    │                  │
+│  - XY Pad       │   AbortController  │  - Pseudo-Voigt  │
+│  - uPlot        │   + Throttling     │  - NumPy         │
+│  - Perf Monitor │                    │  - ~100μs calc   │
+└─────────────────┘                    └─────────────────┘
+```
+
+### Quick Start
+
+```bash
+# Terminal 1: Start backend
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# Terminal 2: Start frontend
+npm install
+npm run dev:browser
+```
+
+### Optimization Techniques
+
+1. **Throttling** (16ms): Limits request frequency to 60 req/s max
+2. **AbortController**: Cancels in-flight requests when new ones are sent
+3. **requestAnimationFrame**: Syncs rendering to display refresh
+4. **Flat Array Transfer**: Minimizes JSON parsing overhead
+
+### Performance Targets
+
+| Data Size | Target RTT | Status |
+|-----------|-----------|--------|
+| 100 pts × 1 element | < 16ms | 60 FPS |
+| 1000 pts × 5 elements | < 33ms | 30 FPS |
+| 2000 pts × 10 elements | < 50ms | 20 FPS |
+
+---
+
 ## Acknowledgments
 
 - Original Streamlit implementation: [XPSTwin_streamlit](https://github.com/stoyoda0012-cyber/XPSTwin_streamlit)
