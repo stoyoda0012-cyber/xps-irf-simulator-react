@@ -1,0 +1,428 @@
+/* Data fit workspace */
+
+.datafit {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.datafit.dragging::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 2px dashed var(--accent-blue);
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.08);
+  pointer-events: none;
+}
+
+.datafit-controls {
+  width: 330px;
+  flex-shrink: 0;
+  background-color: var(--bg-secondary);
+  padding: 0.75rem;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-color);
+}
+
+.datafit-main-area {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.df-section {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.df-section:last-child {
+  border-bottom: none;
+}
+
+.df-section.disabled {
+  opacity: 0.5;
+}
+
+.df-section h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: var(--accent-blue);
+}
+
+.drop-zone {
+  border: 1.5px dashed var(--border-color);
+  border-radius: 6px;
+  padding: 0.9rem 0.6rem;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg-primary);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.drop-zone:hover,
+.drop-zone:focus-visible {
+  border-color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.06);
+  outline: none;
+}
+
+.drop-title {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.drop-sub {
+  margin-top: 0.25rem;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+.df-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.df-buttons {
+  margin-top: 0.5rem;
+}
+
+.df-button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.df-button:hover:not(:disabled) {
+  border-color: var(--accent-blue);
+}
+
+.df-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.df-button.primary,
+.df-button.active {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: white;
+}
+
+.df-button.small {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+}
+
+.paste-box {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.paste-box textarea {
+  width: 100%;
+  font-family: monospace;
+  font-size: 0.72rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.4rem;
+  resize: vertical;
+}
+
+.df-hint {
+  margin: 0.35rem 0 0 0;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.df-hint.warn {
+  color: #fbbf24;
+}
+
+.df-error {
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.72rem;
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 4px;
+}
+
+.df-file {
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  background: var(--bg-primary);
+  border-radius: 4px;
+}
+
+.df-file-name {
+  font-size: 0.78rem;
+  color: var(--accent-green);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.df-note {
+  margin-top: 0.35rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: #fde68a;
+}
+
+.df-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.45rem;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.df-field.inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.df-field select {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.2rem;
+  font-size: 0.75rem;
+}
+
+.df-tag {
+  margin-left: 0.4rem;
+  font-style: normal;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 0 0.25rem;
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.seg button {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: none;
+  border-right: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.seg button:last-child {
+  border-right: none;
+}
+
+.seg button.active {
+  background: var(--accent-blue);
+  color: white;
+}
+
+.seg button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.radio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.window-row label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  gap: 0.15rem;
+}
+
+.num-field {
+  width: 6.2rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.2rem 0.3rem;
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.num-field:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.num-field.invalid {
+  border-color: var(--accent-red);
+}
+
+.df-unit {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  align-self: flex-end;
+  padding-bottom: 0.25rem;
+}
+
+.window-row .df-button {
+  align-self: flex-end;
+}
+
+.datafit .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.df-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.df-chart-header h3 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.df-chart-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.df-busy {
+  font-size: 0.72rem;
+  color: #fbbf24;
+}
+
+.df-empty {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+}
+
+.datafit-resid {
+  margin-top: 0.25rem;
+}
+
+.df-results.stale {
+  opacity: 0.6;
+}
+
+.df-status {
+  font-size: 0.78rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.df-status.ok {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.df-status.warn {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.df-status ul {
+  margin: 0.3rem 0 0 0;
+  padding-left: 1.2rem;
+}
+
+.df-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.df-table td {
+  padding: 0.28rem 0.4rem;
+  border-bottom: 1px solid var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.df-table td.mono {
+  font-family: monospace;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.df-tag-cell {
+  font-size: 0.68rem;
+  width: 4rem;
+}
+
+.df-calibration {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.78rem;
+  color: #bfdbfe;
+}
+
+@media (max-width: 900px) {
+  .datafit {
+    flex-direction: column;
+  }
+
+  .datafit-controls {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+}

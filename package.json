@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "backend": "cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+    "backend": "cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "test": "vitest run"
   },
   "dependencies": {
     "@types/recharts": "^1.8.29",
@@ -30,6 +31,7 @@
     "globals": "^16.5.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vitest": "^4.1.12"
   }
 }

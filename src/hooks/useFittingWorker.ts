@@ -6,10 +6,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   FitFermiEdgeMessage,
   EstimateIRFMessage,
+  WorkerIncomingMessage,
   WorkerOutgoingMessage,
 } from '../workers/fitting.worker';
-import type { FermiEdgeFitResult, IRFEstimationResult } from '../lib/fitting';
+import type { IRFEstimationResult } from '../lib/fitting';
 import { defaultIRFBounds } from '../lib/fitting';
+import type { FermiFitOptions, FermiFitResult } from '../lib/fermiEdge';
 
 export interface FittingProgress {
   iteration: number;
@@ -23,14 +25,9 @@ export interface UseFittingWorkerResult {
   progress: FittingProgress | null;
   error: string | null;
 
-  // Fermi edge fitting
-  fitFermiEdge: (
-    energy: number[],
-    observedSpectrum: number[],
-    temp: number,
-    fitTemp?: boolean,
-    useGlobalOpt?: boolean
-  ) => Promise<FermiEdgeFitResult>;
+  // Fermi edge fitting (x: eV, occupied side at lower values). A new call
+  // replaces one still running, so the latest settings always win.
+  fitFermiEdge: (x: number[], y: number[], options: FermiFitOptions) => Promise<FermiFitResult>;
 
   // IRF parameter estimation
   estimateIRF: (
@@ -49,29 +46,36 @@ function generateId(): string {
   return `msg_${Date.now()}_${messageIdCounter++}`;
 }
 
+interface PendingRequest {
+  resolve: (value: unknown) => void;
+  reject: (error: Error) => void;
+}
+
 export function useFittingWorker(): UseFittingWorkerResult {
   const workerRef = useRef<Worker | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState<FittingProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Store promise resolvers for current operation
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const currentResolverRef = useRef<{
-    resolve: (value: any) => void;
-    reject: (error: Error) => void;
-  } | null>(null);
+  const pendingRef = useRef<PendingRequest | null>(null);
   const currentIdRef = useRef<string | null>(null);
 
-  // Initialize worker
-  useEffect(() => {
-    // Create worker using Vite's worker import syntax
-    workerRef.current = new Worker(
+  const finish = useCallback((errorMessage: string | null) => {
+    setIsRunning(false);
+    setProgress(null);
+    if (errorMessage) setError(errorMessage);
+    currentIdRef.current = null;
+  }, []);
+
+  // A worker with its handlers attached. Used at mount and after cancel, so
+  // a cancelled worker is never replaced by one that nobody listens to.
+  const createWorker = useCallback((): Worker => {
+    const worker = new Worker(
       new URL('../workers/fitting.worker.ts', import.meta.url),
       { type: 'module' }
     );
 
-    workerRef.current.onmessage = (event: MessageEvent<WorkerOutgoingMessage>) => {
+    worker.onmessage = (event: MessageEvent<WorkerOutgoingMessage>) => {
       const message = event.data;
 
       // Ignore messages for old requests
@@ -89,82 +93,70 @@ export function useFittingWorker(): UseFittingWorkerResult {
           break;
 
         case 'result':
-          setIsRunning(false);
-          setProgress(null);
-          if (currentResolverRef.current) {
-            currentResolverRef.current.resolve(message.result);
-            currentResolverRef.current = null;
-          }
+          finish(null);
+          pendingRef.current?.resolve(message.result);
+          pendingRef.current = null;
           break;
 
         case 'error':
-          setIsRunning(false);
-          setProgress(null);
-          setError(message.error);
-          if (currentResolverRef.current) {
-            currentResolverRef.current.reject(new Error(message.error));
-            currentResolverRef.current = null;
-          }
+          finish(message.error);
+          pendingRef.current?.reject(new Error(message.error));
+          pendingRef.current = null;
           break;
       }
     };
 
-    workerRef.current.onerror = (event) => {
+    worker.onerror = (event) => {
       console.error('Worker error:', event);
-      setIsRunning(false);
-      setError(event.message);
-      if (currentResolverRef.current) {
-        currentResolverRef.current.reject(new Error(event.message));
-        currentResolverRef.current = null;
-      }
+      finish(event.message || 'Worker error');
+      pendingRef.current?.reject(new Error(event.message));
+      pendingRef.current = null;
     };
 
+    return worker;
+  }, [finish]);
+
+  // Initialize worker
+  useEffect(() => {
+    workerRef.current = createWorker();
     return () => {
       workerRef.current?.terminate();
       workerRef.current = null;
     };
-  }, []);
+  }, [createWorker]);
 
-  const fitFermiEdge = useCallback(
-    (
-      energy: number[],
-      observedSpectrum: number[],
-      temp: number,
-      fitTemp: boolean = true,
-      useGlobalOpt: boolean = true
-    ): Promise<FermiEdgeFitResult> => {
-      return new Promise((resolve, reject) => {
-        if (!workerRef.current) {
-          reject(new Error('Worker not initialized'));
-          return;
-        }
-
-        if (isRunning) {
+  const send = useCallback(<T,>(build: (id: string) => WorkerIncomingMessage, supersede = false): Promise<T> => {
+    return new Promise<T>((resolve, reject) => {
+      if (!workerRef.current) {
+        reject(new Error('Worker not initialized'));
+        return;
+      }
+      if (currentIdRef.current) {
+        if (!supersede) {
           reject(new Error('Another operation is in progress'));
           return;
         }
+        // Drop the running request: restart the worker and reject its promise
+        workerRef.current.terminate();
+        workerRef.current = createWorker();
+        pendingRef.current?.reject(new Error('Superseded'));
+        pendingRef.current = null;
+      }
 
-        const id = generateId();
-        currentIdRef.current = id;
-        currentResolverRef.current = { resolve, reject };
-        setIsRunning(true);
-        setError(null);
-        setProgress(null);
+      const id = generateId();
+      currentIdRef.current = id;
+      pendingRef.current = { resolve: v => resolve(v as T), reject };
+      setIsRunning(true);
+      setError(null);
+      setProgress(null);
+      workerRef.current.postMessage(build(id));
+    });
+  }, [createWorker]);
 
-        const message: FitFermiEdgeMessage = {
-          type: 'fitFermiEdge',
-          id,
-          energy,
-          observedSpectrum,
-          temp,
-          fitTemp,
-          useGlobalOpt,
-        };
-
-        workerRef.current.postMessage(message);
-      });
-    },
-    [isRunning]
+  const fitFermiEdge = useCallback(
+    (x: number[], y: number[], options: FermiFitOptions) =>
+      send<FermiFitResult>(id => ({ type: 'fitFermiEdge', id, x, y, options }) satisfies FitFermiEdgeMessage, true),
+    [send]
   );
 
   const estimateIRF = useCallback(
@@ -173,60 +165,27 @@ export function useFittingWorker(): UseFittingWorkerResult {
       temp: number,
       bounds: typeof defaultIRFBounds = defaultIRFBounds,
       maxIterations: number = 50
-    ): Promise<IRFEstimationResult> => {
-      return new Promise((resolve, reject) => {
-        if (!workerRef.current) {
-          reject(new Error('Worker not initialized'));
-          return;
-        }
-
-        if (isRunning) {
-          reject(new Error('Another operation is in progress'));
-          return;
-        }
-
-        const id = generateId();
-        currentIdRef.current = id;
-        currentResolverRef.current = { resolve, reject };
-        setIsRunning(true);
-        setError(null);
-        setProgress(null);
-
-        const message: EstimateIRFMessage = {
-          type: 'estimateIRF',
-          id,
-          observedSpectrum,
-          temp,
-          bounds,
-          maxIterations,
-        };
-
-        workerRef.current.postMessage(message);
-      });
-    },
-    [isRunning]
+    ) =>
+      send<IRFEstimationResult>(id => ({
+        type: 'estimateIRF',
+        id,
+        observedSpectrum,
+        temp,
+        bounds,
+        maxIterations,
+      }) satisfies EstimateIRFMessage),
+    [send]
   );
 
   const cancel = useCallback(() => {
-    if (workerRef.current && isRunning) {
-      // Terminate and recreate worker
-      workerRef.current.terminate();
-
-      workerRef.current = new Worker(
-        new URL('../workers/fitting.worker.ts', import.meta.url),
-        { type: 'module' }
-      );
-
-      setIsRunning(false);
-      setProgress(null);
-      currentIdRef.current = null;
-
-      if (currentResolverRef.current) {
-        currentResolverRef.current.reject(new Error('Operation cancelled'));
-        currentResolverRef.current = null;
-      }
-    }
-  }, [isRunning]);
+    if (!currentIdRef.current) return;
+    // Terminate the busy worker and start a fresh one with handlers attached
+    workerRef.current?.terminate();
+    workerRef.current = createWorker();
+    finish(null);
+    pendingRef.current?.reject(new Error('Operation cancelled'));
+    pendingRef.current = null;
+  }, [createWorker, finish]);
 
   return {
     isRunning,
