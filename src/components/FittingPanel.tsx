@@ -5,10 +5,12 @@
 
 import { useState, useCallback } from 'react';
 import { useFittingWorker } from '../hooks/useFittingWorker';
-import type { FermiEdgeFitResult, IRFEstimationResult } from '../lib/fitting';
+import type { IRFEstimationResult } from '../lib/fitting';
+import { FWHM_PER_SIGMA } from '../lib/fermiEdge';
+import type { FermiFitResult, FitWarning } from '../lib/fermiEdge';
 import type { SimulatorParams } from '../lib/simulator';
 import { t } from '../i18n/translations';
-import type { Language } from '../i18n/translations';
+import type { Language, TranslationKey } from '../i18n/translations';
 import './FittingPanel.css';
 
 interface FittingPanelProps {
@@ -16,18 +18,31 @@ interface FittingPanelProps {
   observedSpectrum: number[];
   temp: number;
   lang: Language;
+  /** Combined resolution set on the sliders (meV), shown next to the fitted one */
+  trueSigma?: number;
   onApplyIRFParams?: (params: Partial<SimulatorParams>) => void;
   onFitResult?: (fittedSpectrum: number[] | null) => void;
+  onSendToDataFit?: () => void;
 }
 
 type FittingMode = 'fermi' | 'irf';
 type FittingStatus = 'idle' | 'running' | 'success' | 'error';
 
-// Helper to format value with error, showing N/A if error is NaN
+// Helper to format value with error, showing — if the error is not available
 function formatWithError(value: number, error: number, decimals: number, unit: string): string {
   const valueStr = value.toFixed(decimals);
-  const errorStr = isNaN(error) ? 'N/A' : error.toFixed(decimals);
+  const errorStr = Number.isFinite(error) ? error.toFixed(decimals) : '—';
   return `${valueStr} ± ${errorStr} ${unit}`;
+}
+
+// The user pressed Cancel: not an error to report
+function isCancellation(err: unknown): boolean {
+  return err instanceof Error && err.message === 'Operation cancelled';
+}
+
+function warningText(w: FitWarning, lang: Language): string {
+  const key = (w.code === 'atBound' ? `warn_atBound_${w.param}` : `warn_${w.code}`) as TranslationKey;
+  return t(key, lang);
 }
 
 export function FittingPanel({
@@ -35,49 +50,60 @@ export function FittingPanel({
   observedSpectrum,
   temp,
   lang,
+  trueSigma,
   onApplyIRFParams,
   onFitResult,
+  onSendToDataFit,
 }: FittingPanelProps) {
   const [mode, setMode] = useState<FittingMode>('fermi');
   const [fitTemp, setFitTemp] = useState(false);  // Default to fixed temperature for stability
   const [status, setStatus] = useState<FittingStatus>('idle');
-  const [fermiResult, setFermiResult] = useState<FermiEdgeFitResult | null>(null);
-  const [irfResult, setIrfResult] = useState<IRFEstimationResult | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  // Each result remembers the spectrum it was fitted to, so a result left
+  // over from before a slider moved is flagged instead of shown as current
+  const [fermiFit, setFermiFit] = useState<{ result: FermiFitResult; spectrum: number[] } | null>(null);
+  const [irfFit, setIrfFit] = useState<{ result: IRFEstimationResult; spectrum: number[] } | null>(null);
+  const [expanded, setExpanded] = useState(true);
 
   const { isRunning, progress, error, fitFermiEdge, estimateIRF, cancel } = useFittingWorker();
-
-  // Convert energy from meV to eV for fitting
-  const energyEV = energy.map(e => e / 1000);
+  const fermiResult = fermiFit?.result ?? null;
+  const irfResult = irfFit?.result ?? null;
+  const fermiStale = fermiFit !== null && fermiFit.spectrum !== observedSpectrum;
+  const irfStale = irfFit !== null && irfFit.spectrum !== observedSpectrum;
 
   const handleFitFermiEdge = useCallback(async () => {
     setStatus('running');
-    setFermiResult(null);
+    setFermiFit(null);
 
     try {
-      const result = await fitFermiEdge(energyEV, observedSpectrum, temp, fitTemp, true);
-      setFermiResult(result);
-      setStatus(result.success ? 'success' : 'error');
-      // Notify parent with fitted spectrum
-      if (result.success && onFitResult) {
-        onFitResult(result.fittedSpectrum);
-      }
+      // Simulator axis is E - E_F in meV; the fit works in eV
+      const result = await fitFermiEdge(energy.map(e => e / 1000), observedSpectrum, {
+        temperature: temp,
+        fitTemperature: fitTemp,
+        dos: 'flat',
+        background: 'constant',
+        weighting: 'uniform',
+      });
+      setFermiFit({ result, spectrum: observedSpectrum });
+      setStatus(Number.isFinite(result.ef) ? 'success' : 'error');
+      onFitResult?.(result.fit.length === energy.length ? result.fit : null);
     } catch (err) {
+      if (isCancellation(err)) return;
       setStatus('error');
       console.error('Fermi edge fitting error:', err);
-      if (onFitResult) onFitResult(null);
+      onFitResult?.(null);
     }
-  }, [energyEV, observedSpectrum, temp, fitTemp, fitFermiEdge, onFitResult]);
+  }, [energy, observedSpectrum, temp, fitTemp, fitFermiEdge, onFitResult]);
 
   const handleEstimateIRF = useCallback(async () => {
     setStatus('running');
-    setIrfResult(null);
+    setIrfFit(null);
 
     try {
       const result = await estimateIRF(observedSpectrum, temp);
-      setIrfResult(result);
+      setIrfFit({ result, spectrum: observedSpectrum });
       setStatus(result.success ? 'success' : 'error');
     } catch (err) {
+      if (isCancellation(err)) return;
       setStatus('error');
       console.error('IRF estimation error:', err);
     }
@@ -153,36 +179,39 @@ export function FittingPanel({
                 {isRunning ? t('running', lang) : t('runFitting', lang)}
               </button>
 
-              {isRunning && progress && (
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{ width: `${progress.progress}%` }}
-                  />
-                  <span className="progress-text">
-                    {t('iteration', lang)}: {progress.iteration} |
-                    {t('fitness', lang)}: {progress.fitness.toExponential(3)}
-                  </span>
-                </div>
-              )}
-
-              {fermiResult && fermiResult.success && (
-                <div className="fitting-results">
+              {fermiResult && Number.isFinite(fermiResult.ef) && (
+                <div className={`fitting-results ${fermiStale ? 'stale' : ''}`}>
                   <h4>{t('results', lang)}</h4>
+                  {fermiStale && <p className="stale-note">{t('spectrumChanged', lang)}</p>}
+                  {fermiResult.warnings.length > 0 && (
+                    <ul className="fit-warnings">
+                      {fermiResult.warnings.map((w, i) => <li key={i}>{warningText(w, lang)}</li>)}
+                    </ul>
+                  )}
                   <table className="results-table">
                     <tbody>
                       <tr>
                         <td>{t('efShift', lang)}</td>
-                        <td>{formatWithError(fermiResult.efShift * 1000, fermiResult.efShiftError * 1000, 3, 'meV')}</td>
+                        <td>{formatWithError(fermiResult.ef * 1000, fermiResult.efErr * 1000, 3, 'meV')}</td>
                       </tr>
                       <tr>
                         <td>{t('totalResolution', lang)}</td>
-                        <td>{formatWithError(fermiResult.sigmaTotal * 1000, fermiResult.sigmaTotalError * 1000, 3, 'meV')}</td>
+                        <td>{formatWithError(fermiResult.fwhm / FWHM_PER_SIGMA * 1000, fermiResult.fwhmErr / FWHM_PER_SIGMA * 1000, 3, 'meV')}</td>
+                      </tr>
+                      {trueSigma !== undefined && (
+                        <tr className="reference-row">
+                          <td>{t('simulatorSigma', lang)}</td>
+                          <td>{trueSigma.toFixed(3)} meV</td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td>{t('gaussFwhm', lang)}</td>
+                        <td>{formatWithError(fermiResult.fwhm * 1000, fermiResult.fwhmErr * 1000, 3, 'meV')}</td>
                       </tr>
                       {fitTemp && (
                         <tr>
                           <td>{t('fittedTemp', lang)}</td>
-                          <td>{formatWithError(fermiResult.tempFit, fermiResult.tempError, 2, 'K')}</td>
+                          <td>{formatWithError(fermiResult.temperature, fermiResult.temperatureErr, 2, 'K')}</td>
                         </tr>
                       )}
                       <tr>
@@ -192,6 +221,12 @@ export function FittingPanel({
                     </tbody>
                   </table>
                 </div>
+              )}
+
+              {onSendToDataFit && (
+                <button className="link-button" onClick={onSendToDataFit} disabled={isRunning}>
+                  {t('sendToDataFit', lang)} →
+                </button>
               )}
             </div>
           )}
@@ -223,8 +258,9 @@ export function FittingPanel({
               )}
 
               {irfResult && irfResult.success && (
-                <div className="fitting-results">
+                <div className={`fitting-results ${irfStale ? 'stale' : ''}`}>
                   <h4>{t('estimatedParams', lang)}</h4>
+                  {irfStale && <p className="stale-note">{t('spectrumChanged', lang)}</p>}
                   <table className="results-table">
                     <tbody>
                       <tr>

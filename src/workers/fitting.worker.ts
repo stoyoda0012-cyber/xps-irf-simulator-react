@@ -3,12 +3,10 @@
  * Runs heavy optimization in a separate thread to avoid UI blocking
  */
 
-import {
-  fitFermiEdge,
-  estimateIRFParameters,
-  defaultIRFBounds,
-} from '../lib/fitting';
-import type { FermiEdgeFitResult, IRFEstimationResult } from '../lib/fitting';
+import { estimateIRFParameters, defaultIRFBounds } from '../lib/fitting';
+import type { IRFEstimationResult } from '../lib/fitting';
+import { fitFermiEdge } from '../lib/fermiEdge';
+import type { FermiFitOptions, FermiFitResult } from '../lib/fermiEdge';
 
 /**
  * Message types for worker communication
@@ -23,11 +21,10 @@ export type WorkerMessageType =
 export interface FitFermiEdgeMessage {
   type: 'fitFermiEdge';
   id: string;
-  energy: number[];
-  observedSpectrum: number[];
-  temp: number;
-  fitTemp: boolean;
-  useGlobalOpt: boolean;
+  /** Internal axis: eV, occupied side at lower values, cut to the fit window */
+  x: number[];
+  y: number[];
+  options: FermiFitOptions;
 }
 
 export interface EstimateIRFMessage {
@@ -50,7 +47,7 @@ export interface ProgressMessage {
 export interface ResultMessage {
   type: 'result';
   id: string;
-  result: FermiEdgeFitResult | IRFEstimationResult;
+  result: FermiFitResult | IRFEstimationResult;
 }
 
 export interface ErrorMessage {
@@ -88,30 +85,13 @@ ctx.onmessage = (event: MessageEvent<WorkerIncomingMessage>) => {
 };
 
 /**
- * Handle Fermi edge fitting
+ * Handle Fermi edge fitting (fast: no progress messages)
  */
 function handleFitFermiEdge(message: FitFermiEdgeMessage) {
-  const { id, energy, observedSpectrum, temp, fitTemp, useGlobalOpt } = message;
-  const maxIterations = 100;
+  const { id, x, y, options } = message;
 
   try {
-    const result = fitFermiEdge(
-      energy,
-      observedSpectrum,
-      temp,
-      fitTemp,
-      useGlobalOpt,
-      (iteration, fitness) => {
-        ctx.postMessage({
-          type: 'progress',
-          id,
-          iteration,
-          fitness,
-          progress: Math.min(100, (iteration / maxIterations) * 100),
-        } as ProgressMessage);
-      }
-    );
-
+    const result = fitFermiEdge(x, y, options);
     ctx.postMessage({
       type: 'result',
       id,

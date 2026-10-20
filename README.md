@@ -23,6 +23,32 @@ This is the React-based reimplementation of the [Streamlit XPS IRF Simulator](ht
 - **Combined Resolution Model**: Proper convolution of source and detector resolutions
 - **Bilingual UI**: English / Japanese language toggle
 - **Compact Design**: All controls and visualizations visible without scrolling
+- **Fermi-edge fit of measured data** ("Fit measured data" tab, or `#fit` in the URL): see below
+
+## Fit measured data
+
+Drop a spectrum (CSV / TSV / TXT with energy and intensity columns, Scienta SES `.txt`,
+VAMAS `.vms`), paste columns, or try the built-in synthetic Au edge. Files are read in
+the browser; nothing is uploaded.
+
+1. **Energy axis**: unit (eV / meV) and axis (binding energy, kinetic energy, E − E_F) are
+   read from the header when it says so, otherwise guessed (the occupied side is the
+   brighter one) and can be changed.
+2. **Fit window**: automatic (±1.2 eV around the edge, found from the empty side so the
+   Au 5d rise is not mistaken for it), typed in, or dragged on the plot.
+3. **Model** (same as `toyomacro.fitting.fermi_edge`, `dos_form='occupied'`):
+   `I = A·[(1 + c1·max(E_F − E, 0))·f(E; E_F, T)] ⊗ G(FWHM) + background`, with flat or
+   linear DOS, constant or linear background, temperature fixed or fitted, and Poisson
+   weights (switched on automatically for integer counts).
+
+The fit reruns automatically on every change and shows data, fit, background, residuals,
+E_F (with the calibration shift), Gaussian FWHM and σ, temperature, 10–90 % width,
+reduced χ² and 1σ statistical errors, plus warnings when a result should not be trusted
+(parameter at a bound, E_F undetermined, inverted edge = wrong axis direction, T and
+resolution degenerate). Results can be copied or saved as CSV.
+
+The simulator's own "Fit: Fermi edge & IRF" panel uses the same engine and can send the
+simulated spectrum to this view.
 
 ## Quick Start
 
@@ -33,6 +59,9 @@ npm install
 
 # Development
 npm run dev
+
+# Tests (fit engine and file import)
+npm test
 
 # Production build
 npm run build

@@ -238,3 +238,48 @@
   color: #f44336;
   font-size: 0.75rem;
 }
+
+/* Result left over from before the spectrum changed */
+.fitting-results.stale {
+  opacity: 0.55;
+}
+
+.stale-note {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.72rem;
+  color: #fbbf24;
+}
+
+.fit-warnings {
+  margin: 0 0 0.5rem 0;
+  padding-left: 1.1rem;
+  font-size: 0.72rem;
+  color: #fde68a;
+}
+
+.results-table tr.reference-row td {
+  color: #888;
+  font-style: italic;
+}
+
+.link-button {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.4rem;
+  background: none;
+  border: 1px dashed #4a9eff;
+  border-radius: 4px;
+  color: #4a9eff;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.link-button:hover:not(:disabled) {
+  background: rgba(74, 158, 255, 0.1);
+}
+
+.link-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -5,14 +5,33 @@ import { SpectrumChartCanvas, IRFChartCanvas } from './components/SpectrumChartC
 import { HeatMap } from './components/HeatMap';
 import { Slider } from './components/Slider';
 import { FittingPanel } from './components/FittingPanel';
+import { DataFitWorkspace } from './components/DataFitWorkspace';
+import type { InitialDataset } from './components/DataFitWorkspace';
 import { t } from './i18n/translations';
 import type { Language } from './i18n/translations';
 import './App.css';
 
+type AppMode = 'simulator' | 'data';
+
+// #fit opens the data-fit view directly, so it can be bookmarked or shared
+const DATA_FIT_HASH = '#fit';
+
 function App() {
   const [lang, setLang] = useState<Language>('en');
+  const [mode, setModeState] = useState<AppMode>(() =>
+    window.location.hash === DATA_FIT_HASH ? 'data' : 'simulator'
+  );
   const [params, setParams] = useState<SimulatorParams>(defaultParams);
   const [fittedSpectrum, setFittedSpectrum] = useState<number[] | null>(null);
+  // Spectrum handed from the simulator to the data-fit view; the version
+  // remounts the workspace so it starts from that spectrum
+  const [handoff, setHandoff] = useState<{ version: number; dataset: InitialDataset } | null>(null);
+
+  const setMode = useCallback((next: AppMode) => {
+    setModeState(next);
+    const url = window.location.pathname + window.location.search + (next === 'data' ? DATA_FIT_HASH : '');
+    window.history.replaceState(null, '', url);
+  }, []);
 
   // Update a single parameter
   const updateParam = useCallback((key: keyof SimulatorParams, value: number) => {
@@ -35,6 +54,28 @@ function App() {
   // Run simulation (memoized for performance)
   const result = useMemo(() => simulate(params), [params]);
 
+  const sendToDataFit = useCallback(() => {
+    const name = t('simSpectrumName', lang);
+    setHandoff(prev => ({
+      version: (prev?.version ?? 0) + 1,
+      dataset: {
+        name,
+        parsed: {
+          format: 'text',
+          regions: [{
+            name,
+            columns: [result.energy, result.spectrum],
+            columnNames: ['E − E_F (meV)', 'Intensity'],
+            hints: { unit: 'meV', axis: 'EEF' },
+          }],
+        },
+        temperature: params.temp,
+        dos: 'flat',
+      },
+    }));
+    setMode('data');
+  }, [lang, result, params.temp, setMode]);
+
   return (
     <div className="app">
       {/* Header */}
@@ -42,6 +83,24 @@ function App() {
         <div className="header-content">
           <h1>{t('title', lang)}</h1>
           <p className="subtitle">{t('subtitle', lang)}</p>
+        </div>
+        <div className="mode-tabs" role="tablist">
+          <button
+            role="tab"
+            aria-selected={mode === 'simulator'}
+            className={mode === 'simulator' ? 'active' : ''}
+            onClick={() => setMode('simulator')}
+          >
+            {t('modeSimulator', lang)}
+          </button>
+          <button
+            role="tab"
+            aria-selected={mode === 'data'}
+            className={mode === 'data' ? 'active' : ''}
+            onClick={() => setMode('data')}
+          >
+            {t('modeDataFit', lang)}
+          </button>
         </div>
         <div className="header-buttons">
           <a
@@ -77,7 +136,12 @@ function App() {
         </div>
       </header>
 
-      <div className="main-container">
+      {/* Both views stay mounted so switching keeps their state */}
+      <div className="main-container" hidden={mode !== 'data'}>
+        <DataFitWorkspace key={handoff?.version ?? 0} lang={lang} initial={handoff?.dataset ?? null} />
+      </div>
+
+      <div className="main-container" hidden={mode !== 'simulator'}>
         {/* Sidebar */}
         <aside className="sidebar">
           {/* X-ray Source */}
@@ -223,8 +287,10 @@ function App() {
             observedSpectrum={result.spectrum}
             temp={params.temp}
             lang={lang}
+            trueSigma={result.sigmaCombined}
             onApplyIRFParams={applyParams}
             onFitResult={handleFitResult}
+            onSendToDataFit={sendToDataFit}
           />
         </aside>
 

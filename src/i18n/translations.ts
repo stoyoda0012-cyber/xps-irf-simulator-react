@@ -167,8 +167,8 @@ export const translations = {
 
   // Fitting Panel
   fitting: {
-    en: 'Inverse Problem Analysis',
-    ja: '逆問題解析',
+    en: 'Fit: Fermi edge & IRF',
+    ja: 'フィット：フェルミ端・IRF',
   },
   fermiFitting: {
     en: 'Fermi Edge Fitting',
@@ -179,8 +179,8 @@ export const translations = {
     ja: 'IRFパラメータ推定',
   },
   fermiFittingDesc: {
-    en: 'Fit observed spectrum with Fermi-Dirac × Gaussian convolution model to extract total resolution.',
-    ja: '観測スペクトルをフェルミ・ディラック×ガウシアン畳み込みモデルでフィッティングし、合計分解能を抽出します。',
+    en: 'Fit the simulated spectrum with a Fermi-Dirac edge broadened by a Gaussian to extract the total resolution. To fit your own measurement, use "Fit measured data" at the top.',
+    ja: 'シミュレーションスペクトルを、ガウス関数で広げたフェルミ・ディラック端でフィットし、合計分解能を求めます。自分の測定データは上部の「測定データのフィット」から。',
   },
   irfEstimationDesc: {
     en: 'Estimate geometric IRF parameters (κ, θ, σ, α, etc.) from observed spectrum using Differential Evolution.',
@@ -246,8 +246,391 @@ export const translations = {
     en: 'An error occurred during fitting.',
     ja: 'フィッティング中にエラーが発生しました。',
   },
+  spectrumChanged: {
+    en: 'The spectrum changed after this fit. Run it again.',
+    ja: 'このフィットの後にスペクトルが変わりました。再実行してください。',
+  },
+  simulatorSigma: {
+    en: 'Simulator σ (sliders)',
+    ja: 'シミュレータ σ（スライダー）',
+  },
+  sendToDataFit: {
+    en: 'Open in data-fit view (residuals, window)',
+    ja: 'データフィット画面で開く（残差・範囲指定）',
+  },
+  simSpectrumName: {
+    en: 'Simulated spectrum',
+    ja: 'シミュレーションスペクトル',
+  },
+
+  // Top-level modes
+  modeSimulator: {
+    en: 'Simulator',
+    ja: 'シミュレータ',
+  },
+  modeDataFit: {
+    en: 'Fit measured data',
+    ja: '測定データのフィット',
+  },
+
+  // Data fit workspace: loading
+  stepLoad: {
+    en: '1. Load data',
+    ja: '1. データを読み込む',
+  },
+  dropHere: {
+    en: 'Drop a file here, or click to choose',
+    ja: 'ファイルをここにドロップ、またはクリックして選択',
+  },
+  dropFormats: {
+    en: 'CSV / TSV / TXT (energy and intensity columns), Scienta SES .txt, VAMAS .vms',
+    ja: 'CSV / TSV / TXT（エネルギー列と強度列）、Scienta SES .txt、VAMAS .vms',
+  },
+  pasteData: {
+    en: 'Paste data',
+    ja: 'データを貼り付け',
+  },
+  pastePlaceholder: {
+    en: 'energy, intensity (one point per line; tabs from a spreadsheet work too)',
+    ja: 'エネルギー, 強度（1 行に 1 点。表計算ソフトからのタブ区切りも可）',
+  },
+  usePasted: {
+    en: 'Use pasted data',
+    ja: '貼り付けたデータを使う',
+  },
+  pastedName: {
+    en: 'Pasted data',
+    ja: '貼り付けデータ',
+  },
+  tryExample: {
+    en: 'Try a synthetic Au edge',
+    ja: '合成 Au フェルミ端で試す',
+  },
+  exampleTruth: {
+    en: 'Synthetic example. True values: E_F at BE = {ef} eV, Gaussian FWHM = {fwhm} meV, T = {t} K.',
+    ja: '合成データ。正解値：E_F は BE = {ef} eV、ガウス FWHM = {fwhm} meV、T = {t} K。',
+  },
+  privacyNote: {
+    en: 'Files are read in your browser; nothing is uploaded.',
+    ja: 'ファイルはブラウザ内で読み込むだけで、アップロードはされません。',
+  },
+  readFailed: {
+    en: 'Could not read the file',
+    ja: 'ファイルを読み込めませんでした',
+  },
+  pointsLabel: {
+    en: 'points',
+    ja: '点',
+  },
+  regionLabel: {
+    en: 'Region',
+    ja: 'リージョン',
+  },
+  energyColumn: {
+    en: 'Energy column',
+    ja: 'エネルギー列',
+  },
+  intensityColumn: {
+    en: 'Intensity column',
+    ja: '強度列',
+  },
+  sumOfColumns: {
+    en: 'Sum of all other columns',
+    ja: '他の列の合計',
+  },
+
+  // Data fit workspace: axis
+  stepAxis: {
+    en: '2. Energy axis',
+    ja: '2. エネルギー軸',
+  },
+  unitLabel: {
+    en: 'Unit',
+    ja: '単位',
+  },
+  axisLabel: {
+    en: 'Axis',
+    ja: '軸',
+  },
+  axisBE: {
+    en: 'Binding energy (occupied side at larger values)',
+    ja: '結合エネルギー（占有側が大きい値）',
+  },
+  axisKE: {
+    en: 'Kinetic energy (occupied side at smaller values)',
+    ja: '運動エネルギー（占有側が小さい値）',
+  },
+  axisEEF: {
+    en: 'E − E_F (occupied side negative)',
+    ja: 'E − E_F（占有側が負）',
+  },
+  fromFile: {
+    en: 'from file',
+    ja: 'ファイルから',
+  },
+  guessed: {
+    en: 'guessed',
+    ja: '推定',
+  },
+  setByYou: {
+    en: 'set by you',
+    ja: '手動',
+  },
+  countsDetected: {
+    en: 'integer counts',
+    ja: '整数カウント',
+  },
+  countsHint: {
+    en: 'The intensities are integer counts: Poisson weights are recommended.',
+    ja: '強度が整数カウントなので、ポアソン重みをおすすめします。',
+  },
+  axisGuessHelp: {
+    en: 'Guessed from which end of the spectrum is brighter (the occupied side) and from the size of the numbers. Change it if the edge looks inverted.',
+    ja: 'スペクトルのどちらの端が明るいか（占有側）と数値の大きさから推定しています。端が逆向きに見えたら変更してください。',
+  },
+
+  // Data fit workspace: window and model
+  stepWindow: {
+    en: '3. Fit window',
+    ja: '3. フィット範囲',
+  },
+  windowFrom: {
+    en: 'from',
+    ja: '開始',
+  },
+  windowTo: {
+    en: 'to',
+    ja: '終了',
+  },
+  autoWindow: {
+    en: 'Auto',
+    ja: '自動',
+  },
+  windowIsAuto: {
+    en: 'auto: about ±{half} eV around the edge',
+    ja: '自動：端の前後 約 ±{half} eV',
+  },
+  windowHelp: {
+    en: 'Drag across the plot to choose the range. Keep it clear of the next band (for Au the 5d bands start about 2 eV below E_F).',
+    ja: 'グラフ上を横にドラッグして範囲を選べます。次のバンドを含めないでください（Au では 5d バンドが E_F の約 2 eV 下から始まります）。',
+  },
+  stepModel: {
+    en: '4. Model',
+    ja: '4. モデル',
+  },
+  sampleTemperature: {
+    en: 'Sample temperature (K)',
+    ja: '試料温度 (K)',
+  },
+  fitTempShort: {
+    en: 'Fit the temperature too',
+    ja: '温度もフィットする',
+  },
+  fitTempHelp: {
+    en: 'Temperature and resolution both broaden the edge and are strongly correlated. Fit one with the other fixed, unless the resolution is not much wider than the thermal width (4.4 kT, 0.11 eV at 300 K).',
+    ja: '温度と分解能はどちらも端を広げるため強く相関します。分解能が熱幅（4.4 kT、300 K で 0.11 eV）より十分広い場合は、片方を固定してください。',
+  },
+  dosModel: {
+    en: 'DOS below E_F',
+    ja: 'E_F 以下の状態密度',
+  },
+  dosFlat: {
+    en: 'flat',
+    ja: '一定',
+  },
+  dosLinear: {
+    en: 'linear slope',
+    ja: '線形の傾き',
+  },
+  backgroundModel: {
+    en: 'Background',
+    ja: 'バックグラウンド',
+  },
+  bgConstant: {
+    en: 'constant',
+    ja: '一定',
+  },
+  bgLinear: {
+    en: 'linear',
+    ja: '線形',
+  },
+  poissonWeights: {
+    en: 'Poisson weights (raw counts only)',
+    ja: 'ポアソン重み（生カウントのみ）',
+  },
+  poissonHelp: {
+    en: 'Weights each point by 1/counts, so the reduced χ² should come out near 1. Do not use for normalized or background-subtracted data.',
+    ja: '各点を 1/カウント で重み付けします（換算 χ² が 1 付近になるはず）。規格化やバックグラウンド除去済みのデータには使わないでください。',
+  },
+  autoFitNote: {
+    en: 'The fit reruns automatically whenever you change a setting.',
+    ja: '設定を変えると自動で再フィットします。',
+  },
+
+  // Data fit workspace: chart and results
+  fittingNow: {
+    en: 'Fitting…',
+    ja: 'フィット中…',
+  },
+  viewFull: {
+    en: 'Full data',
+    ja: '全データ',
+  },
+  viewWindow: {
+    en: 'Fit window',
+    ja: 'フィット範囲',
+  },
+  seriesData: {
+    en: 'Data',
+    ja: 'データ',
+  },
+  seriesFit: {
+    en: 'Fit',
+    ja: 'フィット',
+  },
+  seriesBackground: {
+    en: 'Background',
+    ja: 'バックグラウンド',
+  },
+  residualRaw: {
+    en: 'Residual',
+    ja: '残差',
+  },
+  residualNorm: {
+    en: 'Residual / σ',
+    ja: '残差 / σ',
+  },
+  intensityLabel: {
+    en: 'Intensity',
+    ja: '強度',
+  },
+  emptyPlot: {
+    en: 'Load a spectrum (or try the synthetic example) to start.',
+    ja: 'スペクトルを読み込むか、合成データで試してください。',
+  },
+  fitOk: {
+    en: 'Fit converged and passed all checks.',
+    ja: 'フィットは収束し、すべてのチェックを通過しました。',
+  },
+  fitCheck: {
+    en: 'Check before using these numbers:',
+    ja: 'この値を使う前に確認してください：',
+  },
+  efPosition: {
+    en: 'E_F position',
+    ja: 'E_F 位置',
+  },
+  calibrationBE: {
+    en: 'To put E_F at 0, subtract {ef} from the binding energies.',
+    ja: 'E_F を 0 にするには、結合エネルギーから {ef} を引いてください。',
+  },
+  calibrationKE: {
+    en: 'E_F appears at kinetic energy {ef}.',
+    ja: 'E_F は運動エネルギー {ef} に現れています。',
+  },
+  calibrationEEF: {
+    en: 'E_F is offset by {ef} from zero on this axis.',
+    ja: 'この軸では E_F がゼロから {ef} ずれています。',
+  },
+  gaussFwhm: {
+    en: 'Gaussian FWHM (resolution)',
+    ja: 'ガウス FWHM（分解能）',
+  },
+  gaussSigma: {
+    en: 'Gaussian σ',
+    ja: 'ガウス σ',
+  },
+  width1090: {
+    en: '10–90 % edge width (incl. thermal)',
+    ja: '10–90 % 端幅（熱幅込み）',
+  },
+  fixedTag: {
+    en: 'fixed',
+    ja: '固定',
+  },
+  dosSlope: {
+    en: 'DOS slope c₁',
+    ja: 'DOS の傾き c₁',
+  },
+  reducedChi2: {
+    en: 'Reduced χ²',
+    ja: '換算 χ²',
+  },
+  pointsParams: {
+    en: 'Points / parameters',
+    ja: '点数 / パラメータ数',
+  },
+  uncertaintyNote: {
+    en: 'Errors are 1σ and statistical only (scaled by the reduced χ²). They do not include the choice of model or window: refit with the other DOS / background option to see that.',
+    ja: '誤差は 1σ の統計誤差のみです（換算 χ² でスケール）。モデルや範囲の選び方による誤差は含みません。DOS／バックグラウンドを切り替えて再フィットすると目安になります。',
+  },
+  copyResults: {
+    en: 'Copy results',
+    ja: '結果をコピー',
+  },
+  copied: {
+    en: 'Copied',
+    ja: 'コピーしました',
+  },
+  exportCsv: {
+    en: 'Download fit (CSV)',
+    ja: 'フィット結果を保存 (CSV)',
+  },
+
+  // Fit warnings (codes from fermiEdge.ts)
+  warn_tooFewPoints: {
+    en: 'Too few points in the fit window (need at least 8, and more than the number of parameters + 2).',
+    ja: 'フィット範囲の点が少なすぎます（8 点以上、かつパラメータ数 + 2 より多く必要）。',
+  },
+  warn_edgeInverted: {
+    en: 'The intensity is higher on the unoccupied side: the axis direction is probably wrong (check binding vs kinetic / E − E_F).',
+    ja: '非占有側の強度の方が高くなっています。軸の向きが逆の可能性が高いです（結合／運動エネルギー、E − E_F を確認）。',
+  },
+  warn_atBound_ef: {
+    en: 'E_F ended at the edge of the fit window: move or widen the window.',
+    ja: 'E_F がフィット範囲の端で止まりました。範囲を移動するか広げてください。',
+  },
+  warn_atBound_fwhm: {
+    en: 'The resolution ended at its limit (below 0.05 channel, or as wide as the window).',
+    ja: '分解能が上限・下限に張り付きました（0.05 チャンネル未満、または範囲と同じ幅）。',
+  },
+  warn_atBound_temperature: {
+    en: 'The temperature ended at its limit (1–3000 K).',
+    ja: '温度が上限・下限（1–3000 K）に張り付きました。',
+  },
+  warn_nonFiniteError: {
+    en: 'Some uncertainties could not be computed: the data do not determine every parameter.',
+    ja: '一部の誤差を計算できませんでした。データからすべてのパラメータは決まりません。',
+  },
+  warn_efOutsideWindow: {
+    en: 'E_F lies outside the fit window.',
+    ja: 'E_F がフィット範囲の外にあります。',
+  },
+  warn_efUndetermined: {
+    en: 'E_F is not determined: its error is wider than the edge itself.',
+    ja: 'E_F が決まっていません（誤差が端の幅より大きい）。',
+  },
+  warn_resolutionBelowChannel: {
+    en: 'The fitted resolution is below half a channel, so the step size limits it; trust E_F, not the width.',
+    ja: '分解能が半チャンネル未満で、刻み幅で制限されています。幅ではなく E_F だけを信頼してください。',
+  },
+  warn_tempResolutionDegenerate: {
+    en: 'Temperature and resolution are almost fully correlated (|ρ| > 0.95): fix the temperature.',
+    ja: '温度と分解能がほぼ完全に相関しています（|ρ| > 0.95）。温度を固定してください。',
+  },
+  warn_notConverged: {
+    en: 'The optimizer did not converge.',
+    ja: '最適化が収束しませんでした。',
+  },
 };
 
-export function t(key: keyof typeof translations, lang: Language): string {
+export type TranslationKey = keyof typeof translations;
+
+export function t(key: TranslationKey, lang: Language): string {
   return translations[key][lang];
+}
+
+/** t() with {name} placeholders filled in */
+export function tf(key: TranslationKey, lang: Language, vars: Record<string, string | number>): string {
+  return t(key, lang).replace(/\{(\w+)\}/g, (m, name: string) => (name in vars ? String(vars[name]) : m));
 }

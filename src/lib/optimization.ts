@@ -60,8 +60,8 @@ export function differentialEvolution(
   const random = createRandom(seed);
 
   // Initialize population randomly within bounds
-  let population: number[][] = [];
-  let fitness: number[] = [];
+  const population: number[][] = [];
+  const fitness: number[] = [];
 
   for (let i = 0; i < populationSize; i++) {
     const individual = bounds.lower.map((low, j) => {
@@ -457,11 +457,9 @@ export function levenbergMarquardt(
 
     covariance = invJTJ.map(row => row.map(v => v * variance));
   } catch {
-    // If inverse fails, estimate covariance from parameter scale
-    const scale = cost / Math.max(1, residuals.length - p);
-    covariance = Array(p).fill(null).map((_, i) =>
-      Array(p).fill(0).map((_, j) => i === j ? scale * 0.01 : 0)
-    );
+    // Singular: the data do not determine the parameters. Report that as NaN
+    // instead of inventing an error bar.
+    covariance = Array(p).fill(null).map(() => Array(p).fill(NaN));
   }
 
   return {
