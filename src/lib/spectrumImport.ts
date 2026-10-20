@@ -4,7 +4,8 @@
  * Formats: delimited text (CSV / TSV / whitespace / semicolon with decimal
  * comma, optional header and comment lines, any number of columns),
  * Scienta SES .txt exports and VAMAS .vms. The SES and VAMAS readers follow
- * xps-peak-assign/src/lib/parsers.ts (ported there from toyomacro).
+ * xps-peak-assign/src/lib/parsers.ts (ported there from toyomacro). Binary
+ * Igor files (.pxt / .ibw) are read by pxtParser.ts into the same shape.
  *
  * The fit runs on an internal axis in eV on which the occupied states lie at
  * lower values (kinetic energy, or E - E_F); a binding-energy axis is
@@ -30,7 +31,7 @@ export interface ParsedRegion {
 }
 
 export interface ParsedFile {
-  format: 'text' | 'ses' | 'vamas';
+  format: 'text' | 'ses' | 'vamas' | 'pxt' | 'ibw';
   regions: ParsedRegion[];
 }
 

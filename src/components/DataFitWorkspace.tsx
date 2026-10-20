@@ -11,6 +11,7 @@ import { autoFitWindow, FWHM_PER_SIGMA } from '../lib/fermiEdge';
 import type { BackgroundModel, DosModel, FermiFitOptions, FermiFitResult, FitWarning } from '../lib/fermiEdge';
 import { fromInternal, guessAxis, guessUnit, parseSpectrumText, toInternal } from '../lib/spectrumImport';
 import type { AxisKind, EnergyUnit, ParsedFile } from '../lib/spectrumImport';
+import { isIgorBinaryName, parseIgorBinary } from '../lib/pxtParser';
 import { exampleEdgeSpec, syntheticEdgeCSV } from '../lib/synthetic';
 import { t, tf } from '../i18n/translations';
 import type { Language, TranslationKey } from '../i18n/translations';
@@ -156,10 +157,9 @@ export function DataFitWorkspace({ lang, initial }: Props) {
   const { isRunning, error: workerError, fitFermiEdge } = useFittingWorker();
 
   // --- loading ---
-  const loadText = useCallback((text: string, name: string, note?: string) => {
+  const loadParsed = useCallback((name: string, parse: () => ParsedFile, note?: string) => {
     try {
-      const parsed = parseSpectrumText(text, name);
-      const next = prepare(name, parsed, note);
+      const next = prepare(name, parse(), note);
       setLoaded(next);
       // Raw counts: weight by 1/counts so the reduced chi-square means something
       setPoisson(next.countsLike);
@@ -175,12 +175,22 @@ export function DataFitWorkspace({ lang, initial }: Props) {
     }
   }, [modelFromHandoff]);
 
+  const loadText = useCallback(
+    (text: string, name: string, note?: string) => loadParsed(name, () => parseSpectrumText(text, name), note),
+    [loadParsed]
+  );
+
   const loadFile = useCallback((file: File) => {
     const reader = new FileReader();
-    reader.onload = () => loadText(String(reader.result ?? ''), file.name);
     reader.onerror = () => setLoadError(`${file.name}: ${t('readFailed', lang)}`);
-    reader.readAsText(file);
-  }, [lang, loadText]);
+    if (isIgorBinaryName(file.name)) {
+      reader.onload = () => loadParsed(file.name, () => parseIgorBinary(reader.result as ArrayBuffer, file.name));
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = () => loadText(String(reader.result ?? ''), file.name);
+      reader.readAsText(file);
+    }
+  }, [lang, loadParsed, loadText]);
 
   const loadExample = useCallback(() => {
     loadText(syntheticEdgeCSV(), 'synthetic-au-edge.csv', 'example');
@@ -392,7 +402,7 @@ export function DataFitWorkspace({ lang, initial }: Props) {
             <input
               ref={fileInput}
               type="file"
-              accept=".csv,.tsv,.txt,.dat,.xy,.vms"
+              accept=".csv,.tsv,.txt,.dat,.xy,.vms,.pxt,.ibw"
               style={{ display: 'none' }}
               onChange={e => {
                 const f = e.target.files?.[0];

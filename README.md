@@ -27,9 +27,10 @@ This is the React-based reimplementation of the [Streamlit XPS IRF Simulator](ht
 
 ## Fit measured data
 
-Drop a spectrum (CSV / TSV / TXT with energy and intensity columns, Scienta SES `.txt`,
-VAMAS `.vms`), paste columns, or try the built-in synthetic Au edge. Files are read in
-the browser; nothing is uploaded.
+Drop a spectrum (CSV / TSV / TXT with energy and intensity columns, Scienta SES `.txt` or
+`.pxt`, Igor `.ibw`, VAMAS `.vms`), paste columns, or try the built-in synthetic Au edge.
+Angle and sweep dimensions of SES data are summed. Files are read in the browser; nothing
+is uploaded.
 
 1. **Energy axis**: unit (eV / meV) and axis (binding energy, kinetic energy, E − E_F) are
    read from the header when it says so, otherwise guessed (the occupied side is the

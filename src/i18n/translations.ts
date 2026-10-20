@@ -283,8 +283,8 @@ export const translations = {
     ja: 'ファイルをここにドロップ、またはクリックして選択',
   },
   dropFormats: {
-    en: 'CSV / TSV / TXT (energy and intensity columns), Scienta SES .txt, VAMAS .vms',
-    ja: 'CSV / TSV / TXT（エネルギー列と強度列）、Scienta SES .txt、VAMAS .vms',
+    en: 'CSV / TSV / TXT (energy and intensity columns), Scienta SES .txt / .pxt, Igor .ibw, VAMAS .vms',
+    ja: 'CSV / TSV / TXT（エネルギー列と強度列）、Scienta SES .txt / .pxt、Igor .ibw、VAMAS .vms',
   },
   pasteData: {
     en: 'Paste data',
