@@ -15,6 +15,7 @@ import { isIgorBinaryName, parseIgorBinary } from '../lib/pxtParser';
 import { exampleEdgeSpec, syntheticEdgeCSV } from '../lib/synthetic';
 import { t, tf } from '../i18n/translations';
 import type { Language, TranslationKey } from '../i18n/translations';
+import type { Theme } from '../lib/theme';
 import './DataFitWorkspace.css';
 
 export interface InitialDataset {
@@ -132,10 +133,11 @@ function NumberField({ value, onCommit, digits = 4, invalid = false }: {
 
 interface Props {
   lang: Language;
+  theme: Theme;
   initial: InitialDataset | null;
 }
 
-export function DataFitWorkspace({ lang, initial }: Props) {
+export function DataFitWorkspace({ lang, theme, initial }: Props) {
   const [loaded, setLoaded] = useState<Loaded | null>(() =>
     initial ? prepare(initial.name, initial.parsed, initial.note) : null
   );
@@ -647,6 +649,7 @@ export function DataFitWorkspace({ lang, initial }: Props) {
               residualLabel={t(poisson ? 'residualNorm' : 'residualRaw', lang)}
               seriesLabels={seriesLabels}
               onSelectWindow={setWindowDisplay}
+              theme={theme}
             />
           ) : (
             <div className="df-empty">{t('emptyPlot', lang)}</div>

@@ -7,11 +7,17 @@
  */
 
 import { SpectrumBrowser } from './components/SpectrumBrowser';
+import { useTheme } from './hooks/useTheme';
 import './App.css';
 
 function SpectrumBrowserApp() {
+  // Same saved theme as the simulator page
+  const [theme, toggleTheme] = useTheme();
+
   return (
     <SpectrumBrowser
+      theme={theme}
+      onToggleTheme={toggleTheme}
       throttleMs={16}       // 60 FPS ターゲット
       nPoints={100}         // 初期ポイント数
       nSpectra={1}          // 初期スペクトル数

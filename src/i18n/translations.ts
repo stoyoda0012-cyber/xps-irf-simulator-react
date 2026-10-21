@@ -158,6 +158,10 @@ export const translations = {
     en: 'Manual',
     ja: 'マニュアル',
   },
+  toggleTheme: {
+    en: 'Switch light / dark theme',
+    ja: 'ライト／ダーク表示の切り替え',
+  },
 
   // Footer
   realtime: {

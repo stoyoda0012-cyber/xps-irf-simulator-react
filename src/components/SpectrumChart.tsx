@@ -12,6 +12,8 @@ import {
   ComposedChart,
 } from 'recharts';
 
+// Colours are CSS variables, so this SVG chart follows the theme without a redraw
+
 interface SpectrumChartProps {
   energy: number[];
   spectrum: number[];
@@ -43,20 +45,20 @@ export const SpectrumChart: React.FC<SpectrumChartProps> = ({
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
         <XAxis
           dataKey="energy"
-          stroke="#9CA3AF"
-          label={{ value: 'Energy (meV)', position: 'insideBottom', offset: -5, fill: '#9CA3AF' }}
+          stroke="var(--chart-axis)"
+          label={{ value: 'Energy (meV)', position: 'insideBottom', offset: -5, fill: 'var(--chart-axis)' }}
           tickFormatter={(v) => v.toFixed(0)}
         />
         <YAxis
-          stroke="#9CA3AF"
-          label={{ value: 'Intensity', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+          stroke="var(--chart-axis)"
+          label={{ value: 'Intensity', angle: -90, position: 'insideLeft', fill: 'var(--chart-axis)' }}
         />
         <Tooltip
-          contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }}
-          labelStyle={{ color: '#F9FAFB' }}
+          contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+          labelStyle={{ color: 'var(--text-primary)' }}
           formatter={(value) => typeof value === 'number' ? value.toFixed(4) : String(value)}
         />
         <Legend />
@@ -64,7 +66,7 @@ export const SpectrumChart: React.FC<SpectrumChartProps> = ({
           <Line
             type="monotone"
             dataKey="ideal"
-            stroke="#6B7280"
+            stroke="var(--chart-ideal)"
             strokeDasharray="5 5"
             dot={false}
             name="Ideal Fermi-Dirac"
@@ -75,7 +77,7 @@ export const SpectrumChart: React.FC<SpectrumChartProps> = ({
           <Line
             type="monotone"
             dataKey="clean"
-            stroke="#3B82F6"
+            stroke="var(--chart-clean)"
             dot={false}
             name="Clean Observed"
             strokeWidth={1.5}
@@ -86,7 +88,7 @@ export const SpectrumChart: React.FC<SpectrumChartProps> = ({
           <Line
             type="monotone"
             dataKey="observed"
-            stroke="#EF4444"
+            stroke="var(--chart-observed)"
             dot={false}
             name="Observed (with noise)"
             strokeWidth={2}
@@ -113,25 +115,25 @@ export const IRFChart: React.FC<IRFChartProps> = ({ energy, irf }) => {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <ComposedChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
         <XAxis
           dataKey="energy"
-          stroke="#9CA3AF"
-          label={{ value: 'Energy (meV)', position: 'insideBottom', offset: -5, fill: '#9CA3AF' }}
+          stroke="var(--chart-axis)"
+          label={{ value: 'Energy (meV)', position: 'insideBottom', offset: -5, fill: 'var(--chart-axis)' }}
           tickFormatter={(v) => v.toFixed(0)}
         />
-        <YAxis stroke="#9CA3AF" />
+        <YAxis stroke="var(--chart-axis)" />
         <Tooltip
-          contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }}
-          labelStyle={{ color: '#F9FAFB' }}
+          contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+          labelStyle={{ color: 'var(--text-primary)' }}
           formatter={(value) => typeof value === 'number' ? value.toFixed(4) : String(value)}
         />
         <Area
           type="monotone"
           dataKey="irf"
-          fill="#3B82F6"
+          fill="var(--chart-irf)"
           fillOpacity={0.2}
-          stroke="#3B82F6"
+          stroke="var(--chart-irf)"
           strokeWidth={2}
           name="IRF"
         />

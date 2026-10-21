@@ -6,6 +6,8 @@
  */
 
 import React, { useRef, useEffect, useCallback, useState } from 'react';
+import { themeColor } from '../lib/theme';
+import type { Theme } from '../lib/theme';
 
 interface XYPadControllerProps {
   /** X軸の値 (-1 to 1) */
@@ -24,6 +26,8 @@ interface XYPadControllerProps {
   labelY?: string;
   /** 無効化 */
   disabled?: boolean;
+  /** テーマ（変わると新しい色で描き直す） */
+  theme: Theme;
 }
 
 export const XYPadController: React.FC<XYPadControllerProps> = ({
@@ -34,7 +38,8 @@ export const XYPadController: React.FC<XYPadControllerProps> = ({
   height = 300,
   labelX = 'p1 (Shift)',
   labelY = 'p2 (Width)',
-  disabled = false
+  disabled = false,
+  theme
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,8 +83,8 @@ export const XYPadController: React.FC<XYPadControllerProps> = ({
       width / 2, height / 2, 0,
       width / 2, height / 2, Math.max(width, height) / 2
     );
-    gradient.addColorStop(0, '#1a1a2e');
-    gradient.addColorStop(1, '#0f0f1a');
+    gradient.addColorStop(0, themeColor('--bg-secondary'));
+    gradient.addColorStop(1, themeColor('--bg-primary'));
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
@@ -160,14 +165,14 @@ export const XYPadController: React.FC<XYPadControllerProps> = ({
     ctx.shadowBlur = 0;
 
     // 座標値表示
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillStyle = themeColor('--text-primary');
     ctx.font = '12px monospace';
     ctx.textAlign = 'left';
     ctx.fillText(`x: ${valueX.toFixed(3)}`, 8, 18);
     ctx.fillText(`y: ${valueY.toFixed(3)}`, 8, 34);
 
     // ラベル
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillStyle = themeColor('--text-secondary');
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labelX, width / 2, height - 6);
@@ -180,10 +185,10 @@ export const XYPadController: React.FC<XYPadControllerProps> = ({
 
   }, [valueX, valueY, width, height, labelX, labelY, normalizedToCanvas, isDragging]);
 
-  // 描画更新（60FPSを維持）
+  // 描画更新（60FPSを維持）。テーマが変わったときも描き直す
   useEffect(() => {
     draw();
-  }, [draw]);
+  }, [draw, theme]);
 
   // マウスイベント処理（requestAnimationFrameで最適化）
   const handleMouseMove = useCallback((e: MouseEvent) => {

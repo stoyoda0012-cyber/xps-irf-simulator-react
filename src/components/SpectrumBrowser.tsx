@@ -14,6 +14,9 @@ import 'uplot/dist/uPlot.min.css';
 import { XYPadController } from './XYPadController';
 import { PerformanceMonitor } from './PerformanceMonitor';
 import type { PerformanceMetrics } from './PerformanceMonitor';
+import { ThemeToggle } from './ThemeToggle';
+import { themeColor } from '../lib/theme';
+import type { Theme } from '../lib/theme';
 
 // API設定
 const API_BASE_URL = 'http://localhost:8000';
@@ -43,19 +46,10 @@ function throttle<T extends (...args: Parameters<T>) => void>(
   };
 }
 
-// カラーパレット（5元素用）
-const ELEMENT_COLORS = [
-  '#ff6b6b', // 赤
-  '#4ecdc4', // シアン
-  '#ffe66d', // 黄
-  '#95e1d3', // ミント
-  '#f38181', // サーモン
-  '#aa96da', // 紫
-  '#fcbad3', // ピンク
-  '#a8d8ea', // 水色
-  '#f9f871', // レモン
-  '#c7f2a4', // ライム
-];
+// カラーパレット（元素ごと）: テーマの --chart-elements（App.css、スペース区切り）
+function elementColors(): string[] {
+  return themeColor('--chart-elements').split(/\s+/).filter(Boolean);
+}
 
 // ===== ローカル計算用関数（デモモード用） =====
 
@@ -120,6 +114,9 @@ interface SpectrumBrowserProps {
   nElements?: number;
   /** デモモード（バックエンドなしで動作） */
   demoMode?: boolean;
+  /** テーマ（変わるとチャートを新しい色で作り直す） */
+  theme: Theme;
+  onToggleTheme: () => void;
 }
 
 export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
@@ -127,7 +124,9 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
   nPoints: initialNPoints = 100,
   nSpectra: initialNSpectra = 1,
   nElements: initialNElements = 1,
-  demoMode = false
+  demoMode = false,
+  theme,
+  onToggleTheme
 }) => {
   // パラメータ状態
   const [p1, setP1] = useState(0);
@@ -161,6 +160,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
   const chartContainerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const uplotRefs = useRef<(uPlot | null)[]>([]);
   const prevSeriesCountRef = useRef<number>(0);
+  const prevThemeRef = useRef<Theme>(theme);
 
   // AbortController参照
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -376,16 +376,19 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     // yDataの実際の長さに基づいてシリーズを定義
     const actualElements = yData.length;
 
-    // シリーズ定義
+    // シリーズ定義（色は現在のテーマから）
+    const colors = elementColors();
     const series: uPlot.Series[] = [
       { label: 'Energy (eV)' },
       ...Array.from({ length: actualElements }, (_, i) => ({
         label: `Element ${i + 1}`,
-        stroke: ELEMENT_COLORS[i % ELEMENT_COLORS.length],
+        stroke: colors[i % colors.length],
         width: 2,
-        fill: `${ELEMENT_COLORS[i % ELEMENT_COLORS.length]}22`
+        fill: `${colors[i % colors.length]}22`
       }))
     ];
+    const axisColor = themeColor('--chart-axis');
+    const gridColor = themeColor('--chart-grid');
 
     // プロットデータ
     const plotData: uPlot.AlignedData = [xData, ...yData];
@@ -405,9 +408,9 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     const baseHeight = window.innerWidth < 768 ? 200 : 300;
     const chartHeight = nCharts > 2 ? Math.max(150, baseHeight / Math.ceil(nCharts / 2)) : baseHeight;
 
-    // シリーズ数が変わったかチェック
+    // シリーズ数かテーマが変わったかチェック
     const newSeriesCount = actualElements + 1;
-    const needsRecreate = prevSeriesCountRef.current !== newSeriesCount;
+    const needsRecreate = prevSeriesCountRef.current !== newSeriesCount || prevThemeRef.current !== theme;
 
     // 各チャートを更新
     for (let i = 0; i < nCharts; i++) {
@@ -425,8 +428,8 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
           y: { auto: false, range: [yMin - yPadding, yMax + yPadding] }
         },
         axes: [
-          { stroke: '#6b7280', grid: { stroke: 'rgba(100, 149, 237, 0.1)' }, ticks: { stroke: '#4b5563' }, font: '10px monospace' },
-          { stroke: '#6b7280', grid: { stroke: 'rgba(100, 149, 237, 0.1)' }, ticks: { stroke: '#4b5563' }, font: '10px monospace' }
+          { stroke: axisColor, grid: { stroke: gridColor }, ticks: { stroke: gridColor }, font: '10px monospace' },
+          { stroke: axisColor, grid: { stroke: gridColor }, ticks: { stroke: gridColor }, font: '10px monospace' }
         ],
         series
       };
@@ -453,11 +456,12 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
     }
 
     prevSeriesCountRef.current = newSeriesCount;
+    prevThemeRef.current = theme;
 
     // 描画時間を計測
     const renderTime = performance.now() - renderStart;
     setMetrics(prev => ({ ...prev, renderTime }));
-  }, [xData, yData, nCharts]);
+  }, [xData, yData, nCharts, theme]);
 
   // ウィンドウリサイズ対応（複数チャート）
   useEffect(() => {
@@ -500,9 +504,9 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
       flexDirection: 'column',
       gap: '12px',
       padding: '12px',
-      backgroundColor: '#0f0f1a',
+      backgroundColor: 'var(--bg-primary)',
       minHeight: '100vh',
-      color: '#e0e0e0',
+      color: 'var(--text-primary)',
       boxSizing: 'border-box'
     }}>
       {/* ヘッダー */}
@@ -511,7 +515,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
         flexDirection: 'column',
         gap: '8px',
         padding: '12px 16px',
-        backgroundColor: 'rgba(26, 26, 46, 0.9)',
+        backgroundColor: 'var(--bg-secondary)',
         borderRadius: '12px',
         border: '1px solid rgba(100, 149, 237, 0.3)'
       }}>
@@ -526,32 +530,35 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
           }}>
             Spectrum Browser
           </h1>
-          {/* デモモード切り替え */}
-          <button
-            onClick={() => {
-              setUseDemoMode(!useDemoMode);
-              setError(null);
-            }}
-            style={{
-              padding: '6px 12px',
-              fontSize: '11px',
-              backgroundColor: useDemoMode ? 'rgba(34, 197, 94, 0.2)' : 'rgba(100, 149, 237, 0.2)',
-              border: `1px solid ${useDemoMode ? '#22c55e' : '#6495ed'}`,
-              borderRadius: '6px',
-              color: useDemoMode ? '#22c55e' : '#6495ed',
-              cursor: 'pointer'
-            }}
-          >
-            {useDemoMode ? 'Demo Mode' : 'Server Mode'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} title="Switch light / dark theme" />
+            {/* デモモード切り替え */}
+            <button
+              onClick={() => {
+                setUseDemoMode(!useDemoMode);
+                setError(null);
+              }}
+              style={{
+                padding: '6px 12px',
+                fontSize: '11px',
+                backgroundColor: useDemoMode ? 'rgba(34, 197, 94, 0.2)' : 'rgba(100, 149, 237, 0.2)',
+                border: `1px solid ${useDemoMode ? 'var(--accent-green)' : 'var(--accent-blue)'}`,
+                borderRadius: '6px',
+                color: useDemoMode ? 'var(--accent-green)' : 'var(--accent-blue)',
+                cursor: 'pointer'
+              }}
+            >
+              {useDemoMode ? 'Demo Mode' : 'Server Mode'}
+            </button>
+          </div>
         </div>
         {error && (
           <div style={{
             padding: '6px 12px',
             backgroundColor: 'rgba(251, 191, 36, 0.2)',
-            border: '1px solid #fbbf24',
+            border: '1px solid var(--text-warn)',
             borderRadius: '6px',
-            color: '#fbbf24',
+            color: 'var(--text-warn)',
             fontSize: '11px'
           }}>
             {error}
@@ -567,13 +574,13 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
       }}>
         {/* XY Pad */}
         <div style={{
-          backgroundColor: 'rgba(26, 26, 46, 0.9)',
+          backgroundColor: 'var(--bg-secondary)',
           borderRadius: '12px',
           padding: '12px',
           border: '1px solid rgba(100, 149, 237, 0.3)',
           flexShrink: 0
         }}>
-          <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: '#6495ed' }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: 'var(--accent-blue)' }}>
             Parameter Space
           </h3>
           <XYPadController
@@ -584,19 +591,20 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
             height={xyPadSize}
             labelX="p1 (Shift)"
             labelY="p2 (Width)"
+            theme={theme}
           />
         </div>
 
         {/* チャート（複数対応） */}
         <div style={{
           flex: 1,
-          backgroundColor: 'rgba(26, 26, 46, 0.9)',
+          backgroundColor: 'var(--bg-secondary)',
           borderRadius: '12px',
           padding: '12px',
           border: '1px solid rgba(100, 149, 237, 0.3)',
           minWidth: 0
         }}>
-          <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: '#6495ed' }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: 'var(--accent-blue)' }}>
             Spectrum Viewer {nCharts > 1 ? `(×${nCharts})` : ''}
           </h3>
           <div style={{
@@ -611,7 +619,7 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
                 style={{
                   width: '100%',
                   minHeight: nCharts > 2 ? '150px' : (window.innerWidth < 768 ? '200px' : '300px'),
-                  backgroundColor: '#0a0a14',
+                  backgroundColor: 'var(--bg-primary)',
                   borderRadius: '8px'
                 }}
               />
@@ -629,43 +637,43 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
         {/* 設定パネル */}
         <div style={{
           flex: 1,
-          backgroundColor: 'rgba(26, 26, 46, 0.9)',
+          backgroundColor: 'var(--bg-secondary)',
           borderRadius: '12px',
           padding: '12px',
           border: '1px solid rgba(100, 149, 237, 0.3)'
         }}>
-          <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: '#6495ed' }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: '13px', color: 'var(--accent-blue)' }}>
             Data Settings
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div>
-              <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9ca3af', marginBottom: '2px' }}>
+              <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                 <span>Points:</span>
-                <span style={{ color: '#22d3ee' }}>{nPoints}</span>
+                <span style={{ color: 'var(--accent-cyan)' }}>{nPoints}</span>
               </label>
               <input type="range" min={100} max={50000} step={500} value={nPoints}
                 onChange={e => setNPoints(parseInt(e.target.value))}
-                style={{ width: '100%', accentColor: '#6495ed' }}
+                style={{ width: '100%', accentColor: 'var(--accent-blue)' }}
               />
             </div>
             <div>
-              <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9ca3af', marginBottom: '2px' }}>
+              <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                 <span>Elements:</span>
-                <span style={{ color: '#22d3ee' }}>{nElements}</span>
+                <span style={{ color: 'var(--accent-cyan)' }}>{nElements}</span>
               </label>
               <input type="range" min={1} max={20} value={nElements}
                 onChange={e => setNElements(parseInt(e.target.value))}
-                style={{ width: '100%', accentColor: '#6495ed' }}
+                style={{ width: '100%', accentColor: 'var(--accent-blue)' }}
               />
             </div>
             <div>
-              <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#9ca3af', marginBottom: '2px' }}>
+              <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
                 <span>Charts:</span>
-                <span style={{ color: '#f472b6' }}>{nCharts}</span>
+                <span style={{ color: 'var(--accent-pink)' }}>{nCharts}</span>
               </label>
               <input type="range" min={1} max={6} value={nCharts}
                 onChange={e => setNCharts(parseInt(e.target.value))}
-                style={{ width: '100%', accentColor: '#f472b6' }}
+                style={{ width: '100%', accentColor: 'var(--accent-pink)' }}
               />
             </div>
             <div style={{
@@ -676,8 +684,8 @@ export const SpectrumBrowser: React.FC<SpectrumBrowserProps> = ({
               display: 'flex',
               justifyContent: 'space-between'
             }}>
-              <span style={{ color: '#6b7280' }}>Total:</span>
-              <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Total:</span>
+              <span style={{ color: 'var(--text-warn)', fontWeight: 'bold' }}>
                 {(nPoints * nSpectra * nElements).toLocaleString()} pts
               </span>
             </div>

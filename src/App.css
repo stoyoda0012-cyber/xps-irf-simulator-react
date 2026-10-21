@@ -4,16 +4,92 @@
   box-sizing: border-box;
 }
 
-:root {
+/* Themes: data-theme on <html> is set by useTheme (and before first paint by
+   the inline script in index.html). Light is also the fallback when the
+   attribute is missing. uPlot and canvas drawing read the --chart-* colours
+   with themeColor() and rebuild when the theme changes. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --accent-blue: #2563eb;
+  --accent-blue-hover: #1d4ed8;
+  --accent-red: #dc2626;
+  --accent-green: #15803d;
+  --accent-cyan: #0e7490;
+  --accent-pink: #be185d;
+  --accent-violet: #6d28d9;
+  --border-color: #cbd5e1;
+  --button-disabled: #94a3b8;
+  --progress-track: #94a3b8;
+  /* Message text on tinted backgrounds */
+  --text-warn: #b45309;
+  --text-note: #92400e;
+  --text-error: #b91c1c;
+  --text-ok: #166534;
+  --text-info: #1e40af;
+  /* Charts */
+  --chart-axis: #475569;
+  --chart-grid: #e2e8f0;
+  --chart-select: rgba(15, 23, 42, 0.08);
+  --chart-observed: #dc2626;
+  --chart-clean: #2563eb;
+  --chart-ideal: #64748b;
+  --chart-fit: #16a34a;
+  --chart-irf: #2563eb;
+  --chart-irf-fill: rgba(37, 99, 235, 0.15);
+  --chart-data: #2563eb;
+  --chart-background: #d97706;
+  --chart-residual: #334155;
+  --chart-zero: #94a3b8;
+  --chart-ef: #dc2626;
+  --chart-window: rgba(37, 99, 235, 0.1);
+  /* Spectrum browser: one colour per element, space separated */
+  --chart-elements: #dc2626 #0d9488 #ca8a04 #059669 #e11d48 #7c3aed #db2777 #0284c7 #a16207 #65a30d;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
   --bg-tertiary: #334155;
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --accent-blue: #3b82f6;
+  --accent-blue-hover: #2563eb;
   --accent-red: #ef4444;
   --accent-green: #22c55e;
+  --accent-cyan: #22d3ee;
+  --accent-pink: #f472b6;
+  --accent-violet: #a78bfa;
   --border-color: #475569;
+  --button-disabled: #555;
+  --progress-track: #333;
+  --text-warn: #fbbf24;
+  --text-note: #fde68a;
+  --text-error: #fecaca;
+  --text-ok: #bbf7d0;
+  --text-info: #bfdbfe;
+  --chart-axis: #9ca3af;
+  --chart-grid: #374151;
+  --chart-select: rgba(255, 255, 255, 0.1);
+  --chart-observed: #ef4444;
+  --chart-clean: #3b82f6;
+  --chart-ideal: #6b7280;
+  --chart-fit: #22c55e;
+  --chart-irf: #3b82f6;
+  --chart-irf-fill: rgba(59, 130, 246, 0.2);
+  --chart-data: #93c5fd;
+  --chart-background: #f59e0b;
+  --chart-residual: #e2e8f0;
+  --chart-zero: #64748b;
+  --chart-ef: #ef4444;
+  --chart-window: rgba(59, 130, 246, 0.12);
+  --chart-elements: #ff6b6b #4ecdc4 #ffe66d #95e1d3 #f38181 #aa96da #fcbad3 #a8d8ea #f9f871 #c7f2a4;
 }
 
 body {
@@ -78,6 +154,23 @@ body {
 .header-link:hover {
   background-color: var(--border-color);
   color: var(--text-primary);
+}
+
+.theme-toggle {
+  padding: 0.25rem 0.5rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
 }
 
 .lang-toggle {
@@ -446,6 +539,10 @@ body {
 .u-marker {
   width: 12px;
   height: 3px;
+}
+
+.uplot .u-select {
+  background: var(--chart-select);
 }
 
 /* Recharts customization (kept for reference) */
