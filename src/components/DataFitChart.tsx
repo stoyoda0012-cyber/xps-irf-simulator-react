@@ -6,6 +6,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
+import { themeColor } from '../lib/theme';
+import type { Theme } from '../lib/theme';
 
 export interface DataFitChartProps {
   /** Display axis (file units and direction), ascending */
@@ -26,16 +28,9 @@ export interface DataFitChartProps {
   residualLabel: string;
   seriesLabels: { data: string; fit: string; background: string };
   onSelectWindow: (lo: number, hi: number) => void;
+  /** The charts are rebuilt with the theme's colours when it changes */
+  theme: Theme;
 }
-
-const AXIS = {
-  stroke: '#9CA3AF',
-  grid: { stroke: '#374151', width: 1 },
-  ticks: { stroke: '#374151', size: 5 },
-  labelSize: 14,
-  labelFont: '11px sans-serif',
-  font: '10px sans-serif',
-};
 
 const MAIN_HEIGHT = 300;
 const RESID_HEIGHT = 130;
@@ -43,7 +38,7 @@ const RESID_HEIGHT = 130;
 export function DataFitChart(props: DataFitChartProps) {
   const {
     x, y, fit, background, residuals, window: win, ef, reversed, view,
-    xLabel, yLabel, residualLabel, seriesLabels, onSelectWindow,
+    xLabel, yLabel, residualLabel, seriesLabels, onSelectWindow, theme,
   } = props;
   const mainRef = useRef<HTMLDivElement>(null);
   const residRef = useRef<HTMLDivElement>(null);
@@ -68,6 +63,25 @@ export function DataFitChart(props: DataFitChartProps) {
     const width = Math.max(300, mainEl.clientWidth);
     const syncKey = `fermi-${Math.random().toString(36).slice(2)}`;
 
+    const color = {
+      data: themeColor('--chart-data'),
+      fit: themeColor('--chart-fit'),
+      background: themeColor('--chart-background'),
+      residual: themeColor('--chart-residual'),
+      zero: themeColor('--chart-zero'),
+      ef: themeColor('--chart-ef'),
+      window: themeColor('--chart-window'),
+    };
+    const grid = themeColor('--chart-grid');
+    const axis = {
+      stroke: themeColor('--chart-axis'),
+      grid: { stroke: grid, width: 1 },
+      ticks: { stroke: grid, size: 5 },
+      labelSize: 14,
+      labelFont: '11px sans-serif',
+      font: '10px sans-serif',
+    };
+
     const shadeWindow = (u: uPlot) => {
       if (!win) return;
       const a = u.valToPos(win[0], 'x', true);
@@ -77,7 +91,7 @@ export function DataFitChart(props: DataFitChartProps) {
       const right = Math.min(bbox.left + bbox.width, Math.max(a, b));
       if (right <= left) return;
       ctx.save();
-      ctx.fillStyle = 'rgba(59, 130, 246, 0.12)';
+      ctx.fillStyle = color.window;
       ctx.fillRect(left, bbox.top, right - left, bbox.height);
       ctx.restore();
     };
@@ -88,7 +102,7 @@ export function DataFitChart(props: DataFitChartProps) {
       const { ctx, bbox } = u;
       if (px < bbox.left || px > bbox.left + bbox.width) return;
       ctx.save();
-      ctx.strokeStyle = '#ef4444';
+      ctx.strokeStyle = color.ef;
       ctx.lineWidth = 1 * devicePixelRatio;
       ctx.setLineDash([4 * devicePixelRatio, 3 * devicePixelRatio]);
       ctx.beginPath();
@@ -97,7 +111,7 @@ export function DataFitChart(props: DataFitChartProps) {
       ctx.stroke();
       if (label) {
         ctx.setLineDash([]);
-        ctx.fillStyle = '#ef4444';
+        ctx.fillStyle = color.ef;
         ctx.font = `${11 * devicePixelRatio}px sans-serif`;
         ctx.fillText('E_F', px + 4 * devicePixelRatio, bbox.top + 12 * devicePixelRatio);
       }
@@ -121,20 +135,20 @@ export function DataFitChart(props: DataFitChartProps) {
         },
         scales: { x: xScale, y: { auto: true } },
         axes: [
-          { ...AXIS, label: xLabel },
-          { ...AXIS, label: yLabel, size: 60 },
+          { ...axis, label: xLabel },
+          { ...axis, label: yLabel, size: 60 },
         ],
         series: [
           { label: xLabel },
           {
             label: seriesLabels.data,
-            stroke: '#93c5fd',
+            stroke: color.data,
             width: 0,
             paths: () => null,
-            points: { show: true, size: 3, stroke: '#93c5fd', fill: '#93c5fd' },
+            points: { show: true, size: 3, stroke: color.data, fill: color.data },
           },
-          { label: seriesLabels.fit, stroke: '#22c55e', width: 2, spanGaps: false },
-          { label: seriesLabels.background, stroke: '#f59e0b', width: 1, dash: [5, 4], spanGaps: false },
+          { label: seriesLabels.fit, stroke: color.fit, width: 2, spanGaps: false },
+          { label: seriesLabels.background, stroke: color.background, width: 1, dash: [5, 4], spanGaps: false },
         ],
         legend: { show: true },
         hooks: {
@@ -173,17 +187,17 @@ export function DataFitChart(props: DataFitChartProps) {
           },
         },
         axes: [
-          { ...AXIS, label: xLabel },
-          { ...AXIS, label: residualLabel, size: 60 },
+          { ...axis, label: xLabel },
+          { ...axis, label: residualLabel, size: 60 },
         ],
         series: [
           {},
           {
             label: residualLabel,
-            stroke: '#e2e8f0',
+            stroke: color.residual,
             width: 0,
             paths: () => null,
-            points: { show: true, size: 3, stroke: '#e2e8f0', fill: '#e2e8f0' },
+            points: { show: true, size: 3, stroke: color.residual, fill: color.residual },
           },
         ],
         legend: { show: false },
@@ -194,7 +208,7 @@ export function DataFitChart(props: DataFitChartProps) {
               const { ctx, bbox } = u;
               const py = u.valToPos(0, 'y', true);
               ctx.save();
-              ctx.strokeStyle = '#64748b';
+              ctx.strokeStyle = color.zero;
               ctx.lineWidth = devicePixelRatio;
               ctx.beginPath();
               ctx.moveTo(bbox.left, py);
@@ -224,7 +238,7 @@ export function DataFitChart(props: DataFitChartProps) {
       main.destroy();
       resid.destroy();
     };
-  }, [x, y, fit, background, residuals, win, ef, reversed, xRange, xLabel, yLabel, residualLabel, seriesLabels]);
+  }, [x, y, fit, background, residuals, win, ef, reversed, xRange, xLabel, yLabel, residualLabel, seriesLabels, theme]);
 
   return (
     <div className="datafit-chart">

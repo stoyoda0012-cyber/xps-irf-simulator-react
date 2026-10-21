@@ -55,7 +55,7 @@ const MetricBar: React.FC<{
       style={{
         width: '100%',
         height: '4px',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'var(--bg-tertiary)',
         borderRadius: '2px',
         overflow: 'hidden',
         marginTop: '2px'
@@ -78,13 +78,13 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
   metrics,
   isLoading = false
 }) => {
-  // パフォーマンス評価
+  // パフォーマンス評価（color: バッジ背景、text: 文字色はテーマ依存）
   const performanceGrade = useMemo(() => {
-    if (metrics.rtt < 16.67) return { grade: 'A+', color: '#22c55e', label: '60+ FPS' };
-    if (metrics.rtt < 33.33) return { grade: 'A', color: '#22c55e', label: '30-60 FPS' };
-    if (metrics.rtt < 50) return { grade: 'B', color: '#84cc16', label: '20-30 FPS' };
-    if (metrics.rtt < 100) return { grade: 'C', color: '#f59e0b', label: '10-20 FPS' };
-    return { grade: 'D', color: '#ef4444', label: '<10 FPS' };
+    if (metrics.rtt < 16.67) return { grade: 'A+', color: '#22c55e', text: 'var(--accent-green)', label: '60+ FPS' };
+    if (metrics.rtt < 33.33) return { grade: 'A', color: '#22c55e', text: 'var(--accent-green)', label: '30-60 FPS' };
+    if (metrics.rtt < 50) return { grade: 'B', color: '#84cc16', text: 'var(--accent-green)', label: '20-30 FPS' };
+    if (metrics.rtt < 100) return { grade: 'C', color: '#f59e0b', text: 'var(--text-warn)', label: '10-20 FPS' };
+    return { grade: 'D', color: '#ef4444', text: 'var(--accent-red)', label: '<10 FPS' };
   }, [metrics.rtt]);
 
   // データサイズのフォーマット
@@ -102,13 +102,13 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
   return (
     <div
       style={{
-        backgroundColor: 'rgba(15, 15, 26, 0.95)',
+        backgroundColor: 'var(--bg-secondary)',
         borderRadius: '8px',
         padding: '12px 16px',
         border: '1px solid rgba(100, 149, 237, 0.3)',
         fontFamily: 'monospace',
         fontSize: '12px',
-        color: '#e0e0e0',
+        color: 'var(--text-primary)',
         minWidth: '280px'
       }}
     >
@@ -121,7 +121,7 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
         paddingBottom: '8px',
         borderBottom: '1px solid rgba(100, 149, 237, 0.2)'
       }}>
-        <span style={{ fontWeight: 'bold', color: '#6495ed' }}>
+        <span style={{ fontWeight: 'bold', color: 'var(--accent-blue)' }}>
           Performance Monitor
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -152,15 +152,15 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
         {/* RTT */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#9ca3af' }}>Total RTT:</span>
-            <span style={{ color: performanceGrade.color, fontWeight: 'bold' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Total RTT:</span>
+            <span style={{ color: performanceGrade.text, fontWeight: 'bold' }}>
               {metrics.rtt.toFixed(2)} ms
             </span>
           </div>
           <MetricBar
             value={metrics.rtt}
             maxValue={100}
-            color="#6495ed"
+            color="var(--accent-blue)"
             warningThreshold={33.33}
             dangerThreshold={50}
           />
@@ -177,19 +177,19 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
           fontSize: '11px'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#6b7280' }}>Server:</span>
+            <span style={{ color: 'var(--text-secondary)' }}>Server:</span>
             <span>{metrics.serverCalcTime.toFixed(2)} ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#6b7280' }}>Parse:</span>
+            <span style={{ color: 'var(--text-secondary)' }}>Parse:</span>
             <span>{metrics.parseTime.toFixed(2)} ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#6b7280' }}>Render:</span>
+            <span style={{ color: 'var(--text-secondary)' }}>Render:</span>
             <span>{metrics.renderTime.toFixed(2)} ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#6b7280' }}>Network:</span>
+            <span style={{ color: 'var(--text-secondary)' }}>Network:</span>
             <span>
               {Math.max(0, metrics.rtt - metrics.serverCalcTime - metrics.parseTime - metrics.renderTime).toFixed(2)} ms
             </span>
@@ -199,14 +199,14 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
         {/* データ統計 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#9ca3af' }}>Data Points:</span>
-            <span style={{ color: '#22d3ee' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Data Points:</span>
+            <span style={{ color: 'var(--accent-cyan)' }}>
               {metrics.totalPoints.toLocaleString()}
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#9ca3af' }}>Data Size:</span>
-            <span style={{ color: '#a78bfa' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Data Size:</span>
+            <span style={{ color: 'var(--accent-violet)' }}>
               {formatBytes(metrics.dataSize)}
             </span>
           </div>
@@ -221,11 +221,11 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
           borderRadius: '4px',
           fontSize: '11px'
         }}>
-          <span style={{ color: '#6b7280' }}>
+          <span style={{ color: 'var(--text-secondary)' }}>
             Requests: {metrics.successfulRequests} OK / {metrics.cancelledRequests} cancelled
           </span>
           <span style={{
-            color: parseFloat(cancelRate) > 50 ? '#22c55e' : '#9ca3af'
+            color: parseFloat(cancelRate) > 50 ? 'var(--accent-green)' : 'var(--text-secondary)'
           }}>
             ({cancelRate}% saved)
           </span>
@@ -239,8 +239,8 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
           paddingTop: '8px',
           borderTop: '1px solid rgba(100, 149, 237, 0.2)'
         }}>
-          <span style={{ color: '#9ca3af' }}>Throughput:</span>
-          <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+          <span style={{ color: 'var(--text-secondary)' }}>Throughput:</span>
+          <span style={{ color: 'var(--text-warn)', fontWeight: 'bold' }}>
             {metrics.rtt > 0
               ? ((metrics.totalPoints / metrics.rtt) * 1000).toFixed(0)
               : '∞'} pts/sec

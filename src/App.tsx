@@ -7,6 +7,8 @@ import { Slider } from './components/Slider';
 import { FittingPanel } from './components/FittingPanel';
 import { DataFitWorkspace } from './components/DataFitWorkspace';
 import type { InitialDataset } from './components/DataFitWorkspace';
+import { ThemeToggle } from './components/ThemeToggle';
+import { useTheme } from './hooks/useTheme';
 import { t } from './i18n/translations';
 import type { Language } from './i18n/translations';
 import './App.css';
@@ -18,6 +20,7 @@ const DATA_FIT_HASH = '#fit';
 
 function App() {
   const [lang, setLang] = useState<Language>('en');
+  const [theme, toggleTheme] = useTheme();
   const [mode, setModeState] = useState<AppMode>(() =>
     window.location.hash === DATA_FIT_HASH ? 'data' : 'simulator'
   );
@@ -119,6 +122,7 @@ function App() {
           >
             {t('manual', lang)}
           </a>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} title={t('toggleTheme', lang)} />
           <div className="lang-toggle">
             <button
               className={lang === 'en' ? 'active' : ''}
@@ -138,7 +142,12 @@ function App() {
 
       {/* Both views stay mounted so switching keeps their state */}
       <div className="main-container" hidden={mode !== 'data'}>
-        <DataFitWorkspace key={handoff?.version ?? 0} lang={lang} initial={handoff?.dataset ?? null} />
+        <DataFitWorkspace
+          key={handoff?.version ?? 0}
+          lang={lang}
+          theme={theme}
+          initial={handoff?.dataset ?? null}
+        />
       </div>
 
       <div className="main-container" hidden={mode !== 'simulator'}>
@@ -307,13 +316,14 @@ function App() {
                 idealFD={result.idealFD}
                 fittedSpectrum={fittedSpectrum}
                 height={210}
+                theme={theme}
               />
             </div>
 
             {/* IRF */}
             <div className="chart-panel irf-panel">
               <h3>{t('irf', lang)}</h3>
-              <IRFChartCanvas energy={result.energy} irf={result.irf} height={210} />
+              <IRFChartCanvas energy={result.energy} irf={result.irf} height={210} theme={theme} />
             </div>
 
             {/* 2D Spot Profile */}

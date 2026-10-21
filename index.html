@@ -5,6 +5,12 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>xps-irf-simulator-react</title>
+    <script>
+      // Saved theme before first paint, so a dark-theme reload does not flash light (see src/lib/theme.ts)
+      try {
+        if (localStorage.getItem('xps-irf-theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
