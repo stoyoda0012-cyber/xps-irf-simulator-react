@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import { getInitialTheme, saveTheme } from '../lib/theme';
+import { getInitialTheme, saveTheme, THEME_STORAGE_KEY } from '../lib/theme';
 import type { Theme } from '../lib/theme';
 
 /** Theme state for a page: sets data-theme on <html> and remembers the choice */
@@ -17,6 +17,15 @@ export function useTheme(): [Theme, () => void] {
   useEffect(() => {
     saveTheme(theme);
   }, [theme]);
+
+  // Follow a change made in another tab (the docs pages, the other app page)
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === THEME_STORAGE_KEY) setTheme(getInitialTheme());
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const toggleTheme = useCallback(() => {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));

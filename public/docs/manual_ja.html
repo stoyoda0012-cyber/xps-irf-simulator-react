@@ -4,18 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>XPS IRF シミュレータ - ユーザーマニュアル</title>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <style>
-    :root {
-      --bg-primary: #0f172a;
-      --bg-secondary: #1e293b;
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --accent-blue: #3b82f6;
-      --accent-green: #22c55e;
-      --accent-red: #ef4444;
-      --border-color: #475569;
-    }
-
     * {
       box-sizing: border-box;
     }
@@ -148,6 +139,7 @@
 <body>
   <div class="container" style="position: relative;">
     <div class="lang-switch">
+      <button type="button" class="theme-toggle" title="ライト／ダーク表示の切り替え" aria-label="ライト／ダーク表示の切り替え">&#9790;</button>
       <a href="manual.html">English</a>
     </div>
     <a href="../" class="back-link">&larr; シミュレータに戻る</a>
@@ -216,9 +208,9 @@
     <div class="feature-box">
       <h4>1Dスペクトルシミュレーション</h4>
       <ul>
-        <li><span style="color: #EF4444;">赤</span>：観測スペクトル（ノイズあり）</li>
-        <li><span style="color: #3B82F6;">青</span>：クリーンな観測スペクトル（ノイズなし）</li>
-        <li><span style="color: #6B7280;">灰色点線</span>：理想的なフェルミ・ディラック分布</li>
+        <li><span style="color: var(--chart-observed);">赤</span>：観測スペクトル（ノイズあり）</li>
+        <li><span style="color: var(--chart-clean);">青</span>：クリーンな観測スペクトル（ノイズなし）</li>
+        <li><span style="color: var(--chart-ideal);">灰色点線</span>：理想的なフェルミ・ディラック分布</li>
       </ul>
     </div>
 

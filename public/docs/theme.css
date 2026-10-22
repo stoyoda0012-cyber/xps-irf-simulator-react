@@ -1,0 +1,57 @@
+/* Light / dark palette for the docs pages: the same colours as the app
+   (src/App.css). data-theme on <html> is set by theme.js; light is also the
+   fallback when it is missing. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --accent-blue: #2563eb;
+  --accent-green: #15803d;
+  --accent-red: #dc2626;
+  --border-color: #cbd5e1;
+  /* Curve colours named in the manual's chart legend */
+  --chart-observed: #dc2626;
+  --chart-clean: #2563eb;
+  --chart-ideal: #64748b;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-red: #ef4444;
+  --border-color: #475569;
+  --chart-observed: #ef4444;
+  --chart-clean: #3b82f6;
+  --chart-ideal: #6b7280;
+}
+
+/* stretch: the toggle takes the height of the language link next to it */
+.lang-switch {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.theme-toggle {
+  padding: 0 0.6rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
