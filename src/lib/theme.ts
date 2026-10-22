@@ -6,8 +6,9 @@
 
 export type Theme = 'light' | 'dark';
 
-// Shared by the simulator and the spectrum browser page; the inline script in
-// index.html and browser.html reads it too, to set the theme before first paint
+// Shared by the simulator, the spectrum browser page and the docs pages
+// (public/docs/theme.js); the inline script in index.html and browser.html
+// reads it too, to set the theme before first paint
 export const THEME_STORAGE_KEY = 'xps-irf-theme';
 
 export function getInitialTheme(): Theme {

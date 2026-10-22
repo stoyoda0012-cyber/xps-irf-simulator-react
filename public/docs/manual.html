@@ -4,18 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>XPS IRF Simulator - User Manual</title>
+  <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <style>
-    :root {
-      --bg-primary: #0f172a;
-      --bg-secondary: #1e293b;
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --accent-blue: #3b82f6;
-      --accent-green: #22c55e;
-      --accent-red: #ef4444;
-      --border-color: #475569;
-    }
-
     * {
       box-sizing: border-box;
     }
@@ -161,6 +152,7 @@
 <body>
   <div class="container" style="position: relative;">
     <div class="lang-switch">
+      <button type="button" class="theme-toggle" title="Switch light / dark theme" aria-label="Switch light / dark theme">&#9790;</button>
       <a href="manual_ja.html">日本語</a>
     </div>
     <a href="../" class="back-link">&larr; Back to Simulator</a>
@@ -229,9 +221,9 @@
     <div class="feature-box">
       <h4>1D Spectrum Simulation</h4>
       <ul>
-        <li><span style="color: #EF4444;">Red</span>: Observed spectrum (with noise)</li>
-        <li><span style="color: #3B82F6;">Blue</span>: Clean observed spectrum (no noise)</li>
-        <li><span style="color: #6B7280;">Gray dashed</span>: Ideal Fermi-Dirac distribution</li>
+        <li><span style="color: var(--chart-observed);">Red</span>: Observed spectrum (with noise)</li>
+        <li><span style="color: var(--chart-clean);">Blue</span>: Clean observed spectrum (no noise)</li>
+        <li><span style="color: var(--chart-ideal);">Gray dashed</span>: Ideal Fermi-Dirac distribution</li>
       </ul>
     </div>
 
